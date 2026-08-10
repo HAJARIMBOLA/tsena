@@ -23,7 +23,6 @@ import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.Set;
 
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -54,6 +53,8 @@ class PermissionsIT extends AbstractIntegrationTest {
 
     private Site siteAutorise;
     private Site siteNonAutorise;
+    private Utilisateur admin;
+    private Utilisateur employe;
 
     @BeforeEach
     void setUp() {
@@ -89,7 +90,7 @@ class PermissionsIT extends AbstractIntegrationTest {
                 .quantiteDisponible(new BigDecimal("50"))
                 .build());
 
-        utilisateurRepository.save(Utilisateur.builder()
+        admin = utilisateurRepository.save(Utilisateur.builder()
                 .nom("Admin")
                 .email("admin@tsena.mg")
                 .motDePasse(passwordEncoder.encode(MOT_DE_PASSE_CLAIR))
@@ -98,7 +99,7 @@ class PermissionsIT extends AbstractIntegrationTest {
                 .build());
 
         Set<Site> sitesAutorises = new HashSet<>(Set.of(siteAutorise));
-        utilisateurRepository.save(Utilisateur.builder()
+        employe = utilisateurRepository.save(Utilisateur.builder()
                 .nom("Employe")
                 .email("employe@tsena.mg")
                 .motDePasse(passwordEncoder.encode(MOT_DE_PASSE_CLAIR))
@@ -111,21 +112,21 @@ class PermissionsIT extends AbstractIntegrationTest {
     @Test
     void employeRefuseSurSiteNonAutorise() throws Exception {
         mockMvc.perform(get("/stock/site/{siteId}", siteNonAutorise.getId())
-                        .with(httpBasic("employe@tsena.mg", MOT_DE_PASSE_CLAIR)))
+                        .with(authentifieComme(employe)))
                 .andExpect(status().isForbidden());
     }
 
     @Test
     void employeAutoriseSurSonPropreSite() throws Exception {
         mockMvc.perform(get("/stock/site/{siteId}", siteAutorise.getId())
-                        .with(httpBasic("employe@tsena.mg", MOT_DE_PASSE_CLAIR)))
+                        .with(authentifieComme(employe)))
                 .andExpect(status().isOk());
     }
 
     @Test
     void adminAutoriseSurNimporteQuelSite() throws Exception {
         mockMvc.perform(get("/stock/site/{siteId}", siteNonAutorise.getId())
-                        .with(httpBasic("admin@tsena.mg", MOT_DE_PASSE_CLAIR)))
+                        .with(authentifieComme(admin)))
                 .andExpect(status().isOk());
     }
 
@@ -142,7 +143,7 @@ class PermissionsIT extends AbstractIntegrationTest {
                 """;
 
         mockMvc.perform(post("/admin/utilisateurs")
-                        .with(httpBasic("employe@tsena.mg", MOT_DE_PASSE_CLAIR))
+                        .with(authentifieComme(employe))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payload))
                 .andExpect(status().isForbidden());

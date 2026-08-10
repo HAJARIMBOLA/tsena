@@ -12,14 +12,11 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/admin/produits")
-@PreAuthorize("hasRole('ADMIN')")
 public class ProduitController {
 
     private final ProduitService produitService;
@@ -28,29 +25,39 @@ public class ProduitController {
         this.produitService = produitService;
     }
 
-    @PostMapping
+    @PostMapping("/admin/produits")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ProduitDTO> creer(@Valid @RequestBody ProduitDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(produitService.creer(dto));
     }
 
-    @GetMapping
+    @GetMapping("/admin/produits")
+    @PreAuthorize("hasRole('ADMIN')")
     public List<ProduitDTO> lister() {
         return produitService.lister();
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/admin/produits/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ProduitDTO detail(@PathVariable Long id) {
         return produitService.trouverParId(id);
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/admin/produits/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ProduitDTO modifier(@PathVariable Long id, @Valid @RequestBody ProduitDTO dto) {
         return produitService.modifier(id, dto);
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/admin/produits/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> desactiver(@PathVariable Long id) {
         produitService.desactiver(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/produits")
+    public List<ProduitDTO> listerActifs() {
+        return produitService.listerActifs();
     }
 }

@@ -25,7 +25,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -60,6 +59,7 @@ class VenteIT extends AbstractIntegrationTest {
     private Site siteAutorise;
     private Site siteNonAutorise;
     private Produit produit;
+    private Utilisateur employe;
 
     @BeforeEach
     void setUp() {
@@ -96,7 +96,7 @@ class VenteIT extends AbstractIntegrationTest {
                 .build());
 
         Set<Site> sitesAutorises = new HashSet<>(Set.of(siteAutorise));
-        utilisateurRepository.save(Utilisateur.builder()
+        employe = utilisateurRepository.save(Utilisateur.builder()
                 .nom("Employe")
                 .email("employe@tsena.mg")
                 .motDePasse(passwordEncoder.encode(MOT_DE_PASSE_CLAIR))
@@ -113,7 +113,7 @@ class VenteIT extends AbstractIntegrationTest {
                 """.formatted(siteAutorise.getId(), produit.getId());
 
         mockMvc.perform(post("/ventes")
-                        .with(httpBasic("employe@tsena.mg", MOT_DE_PASSE_CLAIR))
+                        .with(authentifieComme(employe))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payload))
                 .andExpect(status().isCreated())
@@ -133,7 +133,7 @@ class VenteIT extends AbstractIntegrationTest {
                 """.formatted(siteAutorise.getId(), produit.getId());
 
         mockMvc.perform(post("/ventes")
-                        .with(httpBasic("employe@tsena.mg", MOT_DE_PASSE_CLAIR))
+                        .with(authentifieComme(employe))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payload))
                 .andExpect(status().isBadRequest());
@@ -151,7 +151,7 @@ class VenteIT extends AbstractIntegrationTest {
                 """.formatted(siteNonAutorise.getId(), produit.getId());
 
         mockMvc.perform(post("/ventes")
-                        .with(httpBasic("employe@tsena.mg", MOT_DE_PASSE_CLAIR))
+                        .with(authentifieComme(employe))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payload))
                 .andExpect(status().isForbidden());

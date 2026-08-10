@@ -39,6 +39,13 @@ public class ProduitService {
     }
 
     @Transactional(readOnly = true)
+    public List<ProduitDTO> listerActifs() {
+        return produitRepository.findByActifTrue().stream()
+                .map(this::toDto)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
     public ProduitDTO trouverParId(Long id) {
         return toDto(getOuLeverException(id));
     }
