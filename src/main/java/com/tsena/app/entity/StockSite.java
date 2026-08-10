@@ -9,6 +9,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import jakarta.persistence.Version;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.AllArgsConstructor;
@@ -48,4 +49,7 @@ public class StockSite {
     @NotNull
     @PositiveOrZero
     private BigDecimal quantiteDisponible;
+
+    @Version
+    private Long version;
 }

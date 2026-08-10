@@ -1,0 +1,2 @@
+ALTER TABLE stock_site
+    ADD COLUMN version BIGINT NOT NULL DEFAULT 0;
