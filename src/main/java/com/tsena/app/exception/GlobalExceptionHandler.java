@@ -56,6 +56,16 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
+    @ExceptionHandler(MotDePasseIncorrectException.class)
+    public ResponseEntity<Map<String, Object>> handleMotDePasseIncorrect(MotDePasseIncorrectException ex) {
+        return build(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    @ExceptionHandler(SetupDejaEffectueException.class)
+    public ResponseEntity<Map<String, Object>> handleSetupDejaEffectue(SetupDejaEffectueException ex) {
+        return build(HttpStatus.FORBIDDEN, ex.getMessage());
+    }
+
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleEntityNotFound(EntityNotFoundException ex) {
         return build(HttpStatus.NOT_FOUND, ex.getMessage());

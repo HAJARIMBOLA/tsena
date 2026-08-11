@@ -1,13 +1,17 @@
 package com.tsena.app.service;
 
+import com.tsena.app.dto.ChangementMotDePasseDTO;
 import com.tsena.app.dto.CreationUtilisateurDTO;
+import com.tsena.app.dto.InscriptionDTO;
 import com.tsena.app.dto.UtilisateurDTO;
 import com.tsena.app.entity.Role;
 import com.tsena.app.entity.Site;
 import com.tsena.app.entity.Utilisateur;
 import com.tsena.app.exception.ConflitException;
+import com.tsena.app.exception.MotDePasseIncorrectException;
 import com.tsena.app.exception.OperationNonAutoriseeException;
 import com.tsena.app.exception.ResourceNotFoundException;
+import com.tsena.app.exception.SetupDejaEffectueException;
 import com.tsena.app.repository.SiteRepository;
 import com.tsena.app.repository.UtilisateurRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -64,6 +68,23 @@ public class UtilisateurService {
         return toDto(getOuLeverException(id));
     }
 
+    @Transactional(readOnly = true)
+    public UtilisateurDTO trouverParEmail(String email) {
+        return toDto(utilisateurRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable : " + email)));
+    }
+
+    public void changerMotDePasse(String email, ChangementMotDePasseDTO dto) {
+        Utilisateur utilisateur = utilisateurRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable : " + email));
+
+        if (!passwordEncoder.matches(dto.getMotDePasseActuel(), utilisateur.getMotDePasse())) {
+            throw new MotDePasseIncorrectException("Mot de passe actuel incorrect.");
+        }
+
+        utilisateur.setMotDePasse(passwordEncoder.encode(dto.getNouveauMotDePasse()));
+    }
+
     public UtilisateurDTO modifierSites(Long id, Set<Long> siteIds) {
         Utilisateur utilisateur = getOuLeverException(id);
 
@@ -76,9 +97,39 @@ public class UtilisateurService {
         return toDto(utilisateur);
     }
 
-    public void desactiver(Long id) {
+    public void desactiver(Long id, String emailAuthentifie) {
         Utilisateur utilisateur = getOuLeverException(id);
+        if (utilisateur.getEmail().equalsIgnoreCase(emailAuthentifie)) {
+            throw new OperationNonAutoriseeException("Vous ne pouvez pas desactiver votre propre compte.");
+        }
         utilisateur.setActif(false);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean setupRequis() {
+        return utilisateurRepository.count() == 0;
+    }
+
+    public Utilisateur creerPremierAdmin(InscriptionDTO dto) {
+        if (utilisateurRepository.count() > 0) {
+            throw new SetupDejaEffectueException(
+                    "Un compte administrateur existe deja. Contactez votre administrateur pour obtenir un acces.");
+        }
+
+        if (utilisateurRepository.findByEmail(dto.getEmail()).isPresent()) {
+            throw new ConflitException("Un utilisateur existe deja avec cet email : " + dto.getEmail());
+        }
+
+        Utilisateur utilisateur = Utilisateur.builder()
+                .nom(dto.getNom())
+                .email(dto.getEmail())
+                .motDePasse(passwordEncoder.encode(dto.getMotDePasse()))
+                .role(Role.ADMIN)
+                .actif(true)
+                .sitesAutorises(new HashSet<>())
+                .build();
+
+        return utilisateurRepository.save(utilisateur);
     }
 
     private Set<Site> resoudreSitesPourRole(Role role, Set<Long> siteIds) {

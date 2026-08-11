@@ -1,9 +1,7 @@
 package com.tsena.app.dto;
 
-import com.tsena.app.entity.Role;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,15 +9,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.HashSet;
-import java.util.Set;
-
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CreationUtilisateurDTO {
+public class InscriptionDTO {
 
     @NotBlank
     private String nom;
@@ -34,10 +29,4 @@ public class CreationUtilisateurDTO {
             message = "Le mot de passe doit contenir au moins 8 caracteres, une majuscule, une minuscule et un chiffre."
     )
     private String motDePasse;
-
-    @NotNull
-    private Role role;
-
-    @Builder.Default
-    private Set<Long> siteIds = new HashSet<>();
 }

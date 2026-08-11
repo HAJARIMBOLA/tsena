@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -50,8 +51,8 @@ public class UtilisateurController {
     }
 
     @PutMapping("/{id}/desactiver")
-    public ResponseEntity<Void> desactiver(@PathVariable Long id) {
-        utilisateurService.desactiver(id);
+    public ResponseEntity<Void> desactiver(@PathVariable Long id, Authentication authentication) {
+        utilisateurService.desactiver(id, authentication.getName());
         return ResponseEntity.noContent().build();
     }
 }
