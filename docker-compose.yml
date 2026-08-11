@@ -16,5 +16,23 @@ services:
       timeout: 5s
       retries: 10
 
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tsena-app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/${DB_NAME:-tsena}
+      DB_USERNAME: ${DB_USERNAME:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-azerty}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET doit etre defini dans .env, ne pas utiliser la valeur par defaut du repo en production}
+      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS:-3600000}
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
 volumes:
   tsena-postgres-data:
