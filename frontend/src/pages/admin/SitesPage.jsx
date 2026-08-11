@@ -1,11 +1,15 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import * as siteService from '../../services/siteService'
+import { useSite } from '../../hooks/useSite'
 import { extraireMessageErreur } from '../../api/apiError'
 import { Alerte, ChargementPage } from '../../components/PageState'
 
 const FORMULAIRE_VIDE = { nom: '', localisation: '' }
 
 export default function SitesPage() {
+  const navigate = useNavigate()
+  const { selectionnerSite, rechargerSites } = useSite()
   const [sites, setSites] = useState([])
   const [chargement, setChargement] = useState(true)
   const [erreur, setErreur] = useState(null)
@@ -72,6 +76,12 @@ export default function SitesPage() {
     } catch (err) {
       setErreur(extraireMessageErreur(err))
     }
+  }
+
+  async function voirSite(site) {
+    await rechargerSites()
+    selectionnerSite(site.id)
+    navigate('/dashboard')
   }
 
   if (chargement) {
@@ -166,7 +176,15 @@ export default function SitesPage() {
                 </tr>
               ) : (
                 <tr key={site.id} className="border-b border-slate-50 last:border-0">
-                  <td className="px-4 py-3 font-medium text-slate-700">{site.nom}</td>
+                  <td className="px-4 py-3 font-medium text-slate-700">
+                    <button
+                      type="button"
+                      onClick={() => voirSite(site)}
+                      className="hover:text-emerald-600 hover:underline"
+                    >
+                      {site.nom}
+                    </button>
+                  </td>
                   <td className="px-4 py-3 text-slate-500">{site.localisation}</td>
                   <td className="px-4 py-3">
                     <span

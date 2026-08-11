@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import LoginPage from './pages/LoginPage'
 import SiteSelectPage from './pages/SiteSelectPage'
 import DashboardPage from './pages/DashboardPage'
+import ParametresPage from './pages/ParametresPage'
 import VentePage from './pages/VentePage'
 import HistoriquePage from './pages/HistoriquePage'
 import StockPage from './pages/StockPage'
@@ -26,7 +27,9 @@ function App() {
             <Route path="/dashboard" element={<DashboardPage />} />
           </Route>
 
-          <Route element={<SiteObligatoireRoute />}>
+          <Route path="/parametres" element={<ParametresPage />} />
+
+          <Route element={<SiteObligatoireRoute adminGlobalAutorise />}>
             <Route path="/vente" element={<VentePage />} />
             <Route path="/historique" element={<HistoriquePage />} />
             <Route path="/stock" element={<StockPage />} />

@@ -5,15 +5,18 @@ import { useSite } from '../hooks/useSite'
 import { extraireMessageErreur } from '../api/apiError'
 import { Alerte, ChargementPage } from '../components/PageState'
 import { formaterMontant } from '../utils/format'
+import { convertirQuantite, estUnitePoids, UNITES_POIDS } from '../utils/unite'
 
 export default function VentePage() {
-  const { siteActif } = useSite()
+  const { siteActif, vueGlobale, sites } = useSite()
   const [produits, setProduits] = useState([])
   const [chargementProduits, setChargementProduits] = useState(true)
   const [erreurProduits, setErreurProduits] = useState(null)
 
+  const [siteFormId, setSiteFormId] = useState('')
   const [produitId, setProduitId] = useState('')
   const [quantite, setQuantite] = useState('')
+  const [uniteSaisie, setUniteSaisie] = useState('')
   const [soumission, setSoumission] = useState(false)
   const [erreur, setErreur] = useState(null)
   const [succes, setSucces] = useState(null)
@@ -36,22 +39,42 @@ export default function VentePage() {
     }
   }, [])
 
+  const siteIdEffectif = vueGlobale ? Number(siteFormId) || null : siteActif.id
+  const sitesActifs = sites.filter((s) => s.actif !== false)
+  const formulairePret = !vueGlobale || Boolean(siteFormId)
+
   const produitSelectionne = useMemo(
     () => produits.find((p) => String(p.id) === String(produitId)) ?? null,
     [produits, produitId],
   )
 
-  const montantEstime = useMemo(() => {
+  const selecteurUniteVisible = Boolean(produitSelectionne) && estUnitePoids(produitSelectionne.unite)
+
+  useEffect(() => {
+    setUniteSaisie(produitSelectionne?.unite ?? '')
+  }, [produitSelectionne])
+
+  const quantiteEnUniteProduit = useMemo(() => {
     if (!produitSelectionne || !quantite) return 0
     const quantiteNombre = Number(quantite)
     if (Number.isNaN(quantiteNombre)) return 0
-    return quantiteNombre * Number(produitSelectionne.prixUnitaire)
-  }, [produitSelectionne, quantite])
+    return convertirQuantite(quantiteNombre, uniteSaisie || produitSelectionne.unite, produitSelectionne.unite)
+  }, [produitSelectionne, quantite, uniteSaisie])
+
+  const montantEstime = useMemo(() => {
+    if (!produitSelectionne) return 0
+    return quantiteEnUniteProduit * Number(produitSelectionne.prixUnitaire)
+  }, [produitSelectionne, quantiteEnUniteProduit])
 
   async function soumettre(e) {
     e.preventDefault()
     setErreur(null)
     setSucces(null)
+
+    if (vueGlobale && !siteFormId) {
+      setErreur('Selectionnez un site.')
+      return
+    }
 
     if (!produitId || !quantite || Number(quantite) <= 0) {
       setErreur('Selectionnez un produit et une quantite valide.')
@@ -61,11 +84,11 @@ export default function VentePage() {
     setSoumission(true)
     try {
       const vente = await venteService.creer({
-        siteId: siteActif.id,
+        siteId: siteIdEffectif,
         produitId: Number(produitId),
-        quantite: Number(quantite),
+        quantite: quantiteEnUniteProduit,
       })
-      setSucces(vente)
+      setSucces({ ...vente, quantiteSaisie: Number(quantite), uniteSaisie: uniteSaisie || produitSelectionne?.unite })
       setQuantite('')
     } catch (err) {
       setErreur(extraireMessageErreur(err))
@@ -82,12 +105,35 @@ export default function VentePage() {
     <div className="mx-auto max-w-lg space-y-6">
       <div>
         <h1 className="text-xl font-semibold text-slate-800">Nouvelle vente</h1>
-        <p className="text-sm text-slate-500">Site : {siteActif.nom}</p>
+        <p className="text-sm text-slate-500">
+          {vueGlobale ? 'Vue globale - tous les sites' : `Site : ${siteActif.nom}`}
+        </p>
       </div>
 
       {erreurProduits && <Alerte type="error">{erreurProduits}</Alerte>}
 
       <form onSubmit={soumettre} className="space-y-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        {vueGlobale && (
+          <div>
+            <label className="mb-1 block text-sm font-medium text-slate-600" htmlFor="siteVente">
+              Site
+            </label>
+            <select
+              id="siteVente"
+              value={siteFormId}
+              onChange={(e) => setSiteFormId(e.target.value)}
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+            >
+              <option value="">Selectionner un site</option>
+              {sitesActifs.map((site) => (
+                <option key={site.id} value={site.id}>
+                  {site.nom}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
         <div>
           <label className="mb-1 block text-sm font-medium text-slate-600" htmlFor="produit">
             Produit
@@ -96,7 +142,8 @@ export default function VentePage() {
             id="produit"
             value={produitId}
             onChange={(e) => setProduitId(e.target.value)}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+            disabled={!formulairePret}
+            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 disabled:cursor-not-allowed disabled:bg-slate-50"
           >
             <option value="">Selectionner un produit</option>
             {produits.map((p) => (
@@ -111,15 +158,37 @@ export default function VentePage() {
           <label className="mb-1 block text-sm font-medium text-slate-600" htmlFor="quantite">
             Quantite
           </label>
-          <input
-            id="quantite"
-            type="number"
-            min="0.01"
-            step="0.01"
-            value={quantite}
-            onChange={(e) => setQuantite(e.target.value)}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-          />
+          <div className="flex gap-2">
+            <input
+              id="quantite"
+              type="number"
+              min="0.01"
+              step="0.01"
+              value={quantite}
+              onChange={(e) => setQuantite(e.target.value)}
+              disabled={!formulairePret}
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 disabled:cursor-not-allowed disabled:bg-slate-50"
+            />
+            {selecteurUniteVisible ? (
+              <select
+                value={uniteSaisie}
+                onChange={(e) => setUniteSaisie(e.target.value)}
+                className="rounded-lg border border-slate-300 px-2 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+              >
+                {UNITES_POIDS.map((u) => (
+                  <option key={u} value={u}>
+                    {u}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              produitSelectionne && (
+                <span className="flex items-center rounded-lg bg-slate-50 px-3 text-sm text-slate-500">
+                  {produitSelectionne.unite}
+                </span>
+              )
+            )}
+          </div>
         </div>
 
         <div className="flex items-center justify-between rounded-lg bg-slate-50 px-4 py-3">
@@ -130,14 +199,14 @@ export default function VentePage() {
         {erreur && <Alerte type="error">{erreur}</Alerte>}
         {succes && (
           <Alerte type="success">
-            Vente enregistree : {formaterMontant(succes.montantTotal)} ({succes.quantite}{' '}
-            {produitSelectionne?.unite ?? ''})
+            Vente enregistree : {formaterMontant(succes.montantTotal)} ({succes.quantiteSaisie}{' '}
+            {succes.uniteSaisie ?? ''})
           </Alerte>
         )}
 
         <button
           type="submit"
-          disabled={soumission}
+          disabled={soumission || !formulairePret}
           className="w-full rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {soumission ? 'Enregistrement...' : 'Confirmer la vente'}
