@@ -4,10 +4,10 @@ services:
     container_name: tsena-postgres
     environment:
       POSTGRES_DB: ${DB_NAME:-tsena}
-      POSTGRES_USER: ${DB_USERNAME:-tsena}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-tsena}
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-azerty}
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - tsena-postgres-data:/var/lib/postgresql/data
     healthcheck:
