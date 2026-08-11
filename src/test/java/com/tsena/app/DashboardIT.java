@@ -93,7 +93,8 @@ class DashboardIT extends AbstractIntegrationTest {
 
         assertThat(dashboard.getChiffreAffairesTotal()).isEqualByComparingTo(new BigDecimal("9000"));
         assertThat(dashboard.getNombreVentes()).isEqualTo(3L);
-        assertThat(dashboard.getQuantiteTotaleVendue()).isEqualByComparingTo(new BigDecimal("6"));
+        assertThat(dashboard.getQuantiteVendueSacs()).isEqualByComparingTo(new BigDecimal("3"));
+        assertThat(dashboard.getQuantiteVenduePoidsKg()).isEqualByComparingTo(new BigDecimal("3"));
         assertThat(dashboard.getTopProduits()).hasSize(2);
         assertThat(dashboard.getTopProduits().get(0).getProduitNom()).isEqualTo("Sucre");
         assertThat(dashboard.getTopProduits().get(0).getMontantTotal()).isEqualByComparingTo(new BigDecimal("6000"));

@@ -18,7 +18,8 @@ public class DashboardSiteDTO {
 
     private BigDecimal chiffreAffairesTotal;
     private Long nombreVentes;
-    private BigDecimal quantiteTotaleVendue;
+    private BigDecimal quantiteVenduePoidsKg;
+    private BigDecimal quantiteVendueSacs;
     private List<VenteAgregeeDTO> topProduits;
     private List<PointEvolutionDTO> evolution;
 }

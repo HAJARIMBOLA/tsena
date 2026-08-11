@@ -11,7 +11,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -38,7 +37,8 @@ public class DashboardService {
         return DashboardSiteDTO.builder()
                 .chiffreAffairesTotal(venteRepository.sommeMontantParSite(siteId, debut, fin))
                 .nombreVentes(venteRepository.compterParSite(siteId, debut, fin))
-                .quantiteTotaleVendue(venteRepository.sommeQuantiteParSite(siteId, debut, fin))
+                .quantiteVenduePoidsKg(venteRepository.sommeQuantitePoidsKgParSite(siteId, debut, fin))
+                .quantiteVendueSacs(venteRepository.sommeQuantiteSacsParSite(siteId, debut, fin))
                 .topProduits(venteRepository.topProduitsParSite(siteId, debut, fin, PageRequest.of(0, 5)))
                 .evolution(mapperEvolution(venteRepository.evolutionParSite(siteId, debut, fin)))
                 .build();
@@ -51,7 +51,8 @@ public class DashboardService {
         return DashboardGlobalDTO.builder()
                 .chiffreAffairesTotal(venteRepository.sommeMontantGlobal(debut, fin))
                 .nombreVentes(venteRepository.compterGlobal(debut, fin))
-                .quantiteTotaleVendue(venteRepository.sommeQuantiteGlobal(debut, fin))
+                .quantiteVenduePoidsKg(venteRepository.sommeQuantitePoidsKgGlobal(debut, fin))
+                .quantiteVendueSacs(venteRepository.sommeQuantiteSacsGlobal(debut, fin))
                 .topProduits(venteRepository.topProduitsGlobal(debut, fin, PageRequest.of(0, 5)))
                 .evolution(mapperEvolution(venteRepository.evolutionGlobale(debut, fin)))
                 .classementSites(venteRepository.classementSites(debut, fin))
@@ -74,7 +75,7 @@ public class DashboardService {
     private List<PointEvolutionDTO> mapperEvolution(List<Object[]> lignes) {
         return lignes.stream()
                 .map(ligne -> new PointEvolutionDTO(
-                        ((Timestamp) ligne[0]).toLocalDateTime().toLocalDate(),
+                        ((LocalDateTime) ligne[0]).toLocalDate(),
                         (BigDecimal) ligne[1]))
                 .toList();
     }
