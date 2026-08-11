@@ -44,6 +44,7 @@ export default function SitesPage() {
       const site = await siteService.creer(formulaire)
       setSites((precedent) => [site, ...precedent])
       setFormulaire(FORMULAIRE_VIDE)
+      await rechargerSites()
     } catch (err) {
       setErreurCreation(extraireMessageErreur(err))
     } finally {
@@ -63,6 +64,7 @@ export default function SitesPage() {
       const site = await siteService.modifier(id, formulaireEdition)
       setSites((precedent) => precedent.map((s) => (s.id === id ? site : s)))
       setEditionId(null)
+      await rechargerSites()
     } catch (err) {
       setErreurEdition(extraireMessageErreur(err))
     }
@@ -73,6 +75,7 @@ export default function SitesPage() {
     try {
       await siteService.desactiver(id)
       setSites((precedent) => precedent.map((s) => (s.id === id ? { ...s, actif: false } : s)))
+      await rechargerSites()
     } catch (err) {
       setErreur(extraireMessageErreur(err))
     }
