@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react'
 import * as utilisateurService from '../../services/utilisateurService'
 import * as siteService from '../../services/siteService'
+import { useAuth } from '../../hooks/useAuth'
 import { extraireMessageErreur } from '../../api/apiError'
 import { Alerte, ChargementPage } from '../../components/PageState'
 
 const FORMULAIRE_VIDE = { nom: '', email: '', motDePasse: '', role: 'EMPLOYE', siteIds: [] }
 
 export default function UtilisateursPage() {
+  const { utilisateur: compteConnecte } = useAuth()
   const [utilisateurs, setUtilisateurs] = useState([])
   const [sites, setSites] = useState([])
   const [chargement, setChargement] = useState(true)
@@ -35,13 +37,6 @@ export default function UtilisateursPage() {
   useEffect(() => {
     charger()
   }, [])
-
-  function basculerSiteFormulaire(siteId) {
-    setFormulaire((f) => ({
-      ...f,
-      siteIds: f.siteIds.includes(siteId) ? f.siteIds.filter((id) => id !== siteId) : [...f.siteIds, siteId],
-    }))
-  }
 
   async function creerUtilisateur(e) {
     e.preventDefault()
@@ -146,7 +141,7 @@ export default function UtilisateursPage() {
             <label className="mb-1 block text-xs font-medium text-slate-500">Role</label>
             <select
               value={formulaire.role}
-              onChange={(e) => setFormulaire((f) => ({ ...f, role: e.target.value, siteIds: [] }))}
+              onChange={(e) => setFormulaire((f) => ({ ...f, role: e.target.value }))}
               className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
             >
               <option value="EMPLOYE">EMPLOYE</option>
@@ -162,28 +157,10 @@ export default function UtilisateursPage() {
           </button>
         </div>
 
-        {formulaire.role === 'EMPLOYE' ? (
-          <div>
-            <p className="mb-2 text-xs font-medium text-slate-500">Sites autorises</p>
-            <div className="flex flex-wrap gap-2">
-              {sites.map((site) => (
-                <label
-                  key={site.id}
-                  className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-1.5 text-sm"
-                >
-                  <input
-                    type="checkbox"
-                    checked={formulaire.siteIds.includes(site.id)}
-                    onChange={() => basculerSiteFormulaire(site.id)}
-                  />
-                  {site.nom}
-                </label>
-              ))}
-            </div>
-          </div>
-        ) : (
+        {formulaire.role === 'EMPLOYE' && (
           <p className="text-xs text-slate-400">
-            Un administrateur a un acces global implicite : aucun site a selectionner.
+            Les sites autorises se configurent apres la creation, via "Modifier les sites" dans le tableau
+            ci-dessous.
           </p>
         )}
       </form>
@@ -243,6 +220,8 @@ export default function UtilisateursPage() {
                         </button>
                       </div>
                     </div>
+                  ) : utilisateur.role === 'ADMIN' ? (
+                    'Tous les sites (acces global)'
                   ) : (
                     nomsSites(utilisateur.siteIds)
                   )}
@@ -267,7 +246,7 @@ export default function UtilisateursPage() {
                         Modifier les sites
                       </button>
                     )}
-                    {utilisateur.actif && (
+                    {utilisateur.actif && utilisateur.id !== compteConnecte?.id && (
                       <button
                         type="button"
                         onClick={() => desactiverUtilisateur(utilisateur.id)}
