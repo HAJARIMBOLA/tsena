@@ -16,8 +16,7 @@ export function AuthProvider({ children }) {
     setInitialise(true)
   }, [])
 
-  const connecter = useCallback(async (email, motDePasse) => {
-    const reponse = await authService.login(email, motDePasse)
+  const appliquerSession = useCallback((reponse) => {
     setAuthToken(reponse.token)
     setUtilisateur({
       id: reponse.id,
@@ -29,6 +28,16 @@ export function AuthProvider({ children }) {
     return reponse
   }, [])
 
+  const connecter = useCallback(
+    async (email, motDePasse) => appliquerSession(await authService.login(email, motDePasse)),
+    [appliquerSession],
+  )
+
+  const enregistrer = useCallback(
+    async (nom, email, motDePasse) => appliquerSession(await authService.register(nom, email, motDePasse)),
+    [appliquerSession],
+  )
+
   const deconnecter = useCallback(() => {
     setAuthToken(null)
     setUtilisateur(null)
@@ -39,6 +48,7 @@ export function AuthProvider({ children }) {
     estConnecte: Boolean(utilisateur),
     estAdmin: utilisateur?.role === 'ADMIN',
     connecter,
+    enregistrer,
     deconnecter,
   }
 
