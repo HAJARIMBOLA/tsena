@@ -10,6 +10,10 @@ export function historiqueParSite(siteId, { debut, fin, page = 0, size = 20 } = 
     .then((res) => res.data)
 }
 
+export function historiqueGlobal({ debut, fin, page = 0, size = 20 } = {}) {
+  return apiClient.get('/ventes/toutes', { params: { debut, fin, page, size } }).then((res) => res.data)
+}
+
 export function mesVentes({ page = 0, size = 20 } = {}) {
   return apiClient.get('/ventes/mes-ventes', { params: { page, size } }).then((res) => res.data)
 }

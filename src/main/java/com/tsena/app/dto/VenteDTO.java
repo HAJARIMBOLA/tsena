@@ -18,6 +18,7 @@ public class VenteDTO {
 
     private Long id;
     private Long siteId;
+    private String siteNom;
     private Long produitId;
     private Long utilisateurId;
     private BigDecimal quantite;

@@ -113,6 +113,15 @@ public class VenteService {
     }
 
     @Transactional(readOnly = true)
+    public Page<VenteDTO> historiqueGlobal(LocalDateTime debut, LocalDateTime fin, Pageable pageable) {
+        Page<Vente> page = (debut != null && fin != null)
+                ? venteRepository.findByDateVenteBetween(debut, fin, pageable)
+                : venteRepository.findAll(pageable);
+
+        return page.map(this::toDto);
+    }
+
+    @Transactional(readOnly = true)
     public Page<VenteDTO> mesVentes(Authentication authentication, Pageable pageable) {
         Long utilisateurId = idUtilisateurConnecte(authentication);
         return venteRepository.findByUtilisateurId(utilisateurId, pageable).map(this::toDto);
@@ -141,6 +150,7 @@ public class VenteService {
         return VenteDTO.builder()
                 .id(vente.getId())
                 .siteId(vente.getSite().getId())
+                .siteNom(vente.getSite().getNom())
                 .produitId(vente.getProduit().getId())
                 .utilisateurId(vente.getUtilisateur().getId())
                 .quantite(vente.getQuantite())

@@ -44,4 +44,10 @@ public class StockController {
     public List<StockSiteDTO> listerParSite(@PathVariable Long siteId) {
         return stockSiteService.listerParSite(siteId);
     }
+
+    @GetMapping("/stock")
+    @PreAuthorize("hasRole('ADMIN')")
+    public List<StockSiteDTO> listerTout() {
+        return stockSiteService.listerTout();
+    }
 }

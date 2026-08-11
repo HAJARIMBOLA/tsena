@@ -66,10 +66,12 @@ export default function Layout() {
             >
               {vueGlobale ? 'Vue globale' : siteActif ? siteActif.nom : 'Choisir un site'}
             </button>
-            <div className="text-right text-sm leading-tight">
-              <p className="font-medium text-slate-700">{utilisateur.nom}</p>
-              <p className="text-xs text-slate-400">{utilisateur.role}</p>
-            </div>
+            <NavLink to="/parametres" className={lienClasses}>
+              <div className="text-right text-sm leading-tight">
+                <p className="font-medium">{utilisateur.nom}</p>
+                <p className="text-xs opacity-70">{utilisateur.role}</p>
+              </div>
+            </NavLink>
             <button
               type="button"
               onClick={seDeconnecter}

@@ -11,3 +11,7 @@ export function reapprovisionner(siteId, produitId, quantite) {
 export function listerParSite(siteId) {
   return apiClient.get(`/stock/site/${siteId}`).then((res) => res.data)
 }
+
+export function listerTout() {
+  return apiClient.get('/stock').then((res) => res.data)
+}

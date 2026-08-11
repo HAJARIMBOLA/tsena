@@ -22,6 +22,8 @@ public class StockSiteDTO {
     @NotNull
     private Long siteId;
 
+    private String siteNom;
+
     @NotNull
     private Long produitId;
 

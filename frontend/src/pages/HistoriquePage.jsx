@@ -7,13 +7,14 @@ import { useSite } from '../hooks/useSite'
 import { extraireMessageErreur } from '../api/apiError'
 import { Alerte, ChargementPage } from '../components/PageState'
 import Pagination from '../components/Pagination'
+import Badge from '../components/Badge'
 import { formaterDateHeure, formaterMontant, formaterQuantite } from '../utils/format'
 
 const TAILLE_PAGE = 20
 
 export default function HistoriquePage() {
   const { estAdmin } = useAuth()
-  const { siteActif } = useSite()
+  const { siteActif, vueGlobale } = useSite()
 
   const [dateDebut, setDateDebut] = useState('')
   const [dateFin, setDateFin] = useState('')
@@ -47,8 +48,11 @@ export default function HistoriquePage() {
     const debut = dateDebut ? `${dateDebut}T00:00:00` : undefined
     const fin = dateFin ? `${dateFin}T23:59:59` : undefined
 
-    venteService
-      .historiqueParSite(siteActif.id, { debut, fin, page, size: TAILLE_PAGE })
+    const requete = vueGlobale
+      ? venteService.historiqueGlobal({ debut, fin, page, size: TAILLE_PAGE })
+      : venteService.historiqueParSite(siteActif.id, { debut, fin, page, size: TAILLE_PAGE })
+
+    requete
       .then((data) => {
         if (!annule) setVentes(data)
       })
@@ -62,7 +66,7 @@ export default function HistoriquePage() {
     return () => {
       annule = true
     }
-  }, [siteActif, dateDebut, dateFin, page])
+  }, [siteActif, vueGlobale, dateDebut, dateFin, page])
 
   function appliquerFiltres(e) {
     e.preventDefault()
@@ -73,7 +77,9 @@ export default function HistoriquePage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-xl font-semibold text-slate-800">Historique des ventes</h1>
-        <p className="text-sm text-slate-500">Site : {siteActif.nom}</p>
+        <p className="text-sm text-slate-500">
+          {vueGlobale ? 'Vue globale - tous les sites' : `Site : ${siteActif.nom}`}
+        </p>
       </div>
 
       <form
@@ -120,8 +126,9 @@ export default function HistoriquePage() {
         <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-slate-100 text-left text-xs uppercase text-slate-400">
+              <tr className="border-b border-slate-100 text-left text-xs uppercase tracking-wide text-slate-400">
                 <th className="px-4 py-3">Date</th>
+                {vueGlobale && <th className="px-4 py-3">Site</th>}
                 <th className="px-4 py-3">Produit</th>
                 <th className="px-4 py-3 text-right">Quantite</th>
                 <th className="px-4 py-3 text-right">Montant</th>
@@ -131,8 +138,13 @@ export default function HistoriquePage() {
             <tbody>
               {ventes?.content?.length ? (
                 ventes.content.map((vente) => (
-                  <tr key={vente.id} className="border-b border-slate-50 last:border-0">
+                  <tr key={vente.id} className="border-b border-slate-50 transition last:border-0 hover:bg-slate-50">
                     <td className="px-4 py-3 text-slate-600">{formaterDateHeure(vente.dateVente)}</td>
+                    {vueGlobale && (
+                      <td className="px-4 py-3">
+                        <Badge color="emerald">{vente.siteNom ?? `Site #${vente.siteId}`}</Badge>
+                      </td>
+                    )}
                     <td className="px-4 py-3 font-medium text-slate-700">
                       {produitsParId[vente.produitId] ?? `Produit #${vente.produitId}`}
                     </td>
@@ -149,7 +161,10 @@ export default function HistoriquePage() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={estAdmin ? 5 : 4} className="px-4 py-10 text-center text-slate-400">
+                  <td
+                    colSpan={4 + (estAdmin ? 1 : 0) + (vueGlobale ? 1 : 0)}
+                    className="px-4 py-10 text-center text-slate-400"
+                  >
                     Aucune vente sur cette periode
                   </td>
                 </tr>

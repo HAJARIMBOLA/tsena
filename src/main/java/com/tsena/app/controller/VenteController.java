@@ -9,6 +9,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -42,6 +43,14 @@ public class VenteController {
                                              Pageable pageable,
                                              Authentication authentication) {
         return venteService.historiqueParSite(siteId, debut, fin, pageable, authentication);
+    }
+
+    @GetMapping("/toutes")
+    @PreAuthorize("hasRole('ADMIN')")
+    public Page<VenteDTO> historiqueGlobal(@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime debut,
+                                            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fin,
+                                            Pageable pageable) {
+        return venteService.historiqueGlobal(debut, fin, pageable);
     }
 
     @GetMapping("/mes-ventes")

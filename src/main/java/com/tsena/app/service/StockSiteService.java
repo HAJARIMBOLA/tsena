@@ -69,10 +69,18 @@ public class StockSiteService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public List<StockSiteDTO> listerTout() {
+        return stockSiteRepository.findAll().stream()
+                .map(this::toDto)
+                .toList();
+    }
+
     private StockSiteDTO toDto(StockSite stockSite) {
         return StockSiteDTO.builder()
                 .id(stockSite.getId())
                 .siteId(stockSite.getSite().getId())
+                .siteNom(stockSite.getSite().getNom())
                 .produitId(stockSite.getProduit().getId())
                 .quantiteDisponible(stockSite.getQuantiteDisponible())
                 .build();

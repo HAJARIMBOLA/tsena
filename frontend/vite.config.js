@@ -16,6 +16,8 @@ export default defineConfig({
       '/stock': 'http://localhost:8080',
       '/dashboard': 'http://localhost:8080',
       '/mes-sites': 'http://localhost:8080',
+      '/produits': 'http://localhost:8080',
+      '/moi': 'http://localhost:8080',
     },
   },
   build: {

@@ -68,14 +68,17 @@ export default function DashboardPage() {
         <ChargementPage message="Chargement du dashboard..." />
       ) : donnees ? (
         <>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <StatTile
               label="Chiffre d'affaires"
               value={formaterMontant(donnees.chiffreAffairesTotal)}
               accent="text-emerald-600"
             />
             <StatTile label="Nombre de ventes" value={formaterQuantite(donnees.nombreVentes)} />
-            <StatTile label="Quantite vendue" value={formaterQuantite(donnees.quantiteTotaleVendue)} />
+            <StatTile label="Poids vendu" value={`${formaterQuantite(donnees.quantiteVenduePoidsKg)} kg`} />
+            {Number(donnees.quantiteVendueSacs) > 0 && (
+              <StatTile label="Sacs vendus" value={formaterQuantite(donnees.quantiteVendueSacs)} />
+            )}
           </div>
 
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">

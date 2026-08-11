@@ -1,20 +1,26 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import * as stockService from '../services/stockService'
 import * as produitService from '../services/produitService'
+import { useAuth } from '../hooks/useAuth'
 import { useSite } from '../hooks/useSite'
 import { extraireMessageErreur } from '../api/apiError'
 import { Alerte, ChargementPage } from '../components/PageState'
 import { formaterQuantite } from '../utils/format'
+import { convertirQuantite, estUnitePoids, UNITES_POIDS } from '../utils/unite'
+import Badge from '../components/Badge'
 
 export default function StockPage() {
-  const { siteActif } = useSite()
+  const { estAdmin } = useAuth()
+  const { siteActif, vueGlobale, sites } = useSite()
   const [stock, setStock] = useState([])
   const [produitsParId, setProduitsParId] = useState({})
   const [chargement, setChargement] = useState(true)
   const [erreur, setErreur] = useState(null)
 
+  const [siteFormId, setSiteFormId] = useState('')
   const [produitId, setProduitId] = useState('')
   const [quantiteAjout, setQuantiteAjout] = useState('')
+  const [uniteSaisie, setUniteSaisie] = useState('')
   const [soumission, setSoumission] = useState(false)
   const [erreurFormulaire, setErreurFormulaire] = useState(null)
   const [succesFormulaire, setSuccesFormulaire] = useState(null)
@@ -22,7 +28,8 @@ export default function StockPage() {
   function charger() {
     setChargement(true)
     setErreur(null)
-    return Promise.all([stockService.listerParSite(siteActif.id), produitService.listerActifs()])
+    const requeteStock = vueGlobale ? stockService.listerTout() : stockService.listerParSite(siteActif.id)
+    return Promise.all([requeteStock, produitService.listerActifs()])
       .then(([stockData, produitsData]) => {
         setStock(stockData)
         setProduitsParId(Object.fromEntries(produitsData.map((p) => [p.id, p])))
@@ -34,29 +41,73 @@ export default function StockPage() {
   useEffect(() => {
     charger()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [siteActif])
+  }, [siteActif, vueGlobale])
+
+  const siteIdEffectif = vueGlobale ? Number(siteFormId) || null : siteActif.id
+
+  const ligneExistante = useMemo(
+    () =>
+      stock.find(
+        (ligne) => ligne.produitId === Number(produitId) && (!vueGlobale || ligne.siteId === siteIdEffectif),
+      ),
+    [stock, produitId, vueGlobale, siteIdEffectif],
+  )
+
+  const produitChoisi = produitsParId[Number(produitId)]
+  const selecteurUniteVisible = Boolean(produitChoisi) && estUnitePoids(produitChoisi.unite)
+
+  useEffect(() => {
+    setUniteSaisie(produitChoisi?.unite ?? '')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [produitChoisi?.id])
 
   async function soumettreReapprovisionnement(e) {
     e.preventDefault()
     setErreurFormulaire(null)
     setSuccesFormulaire(null)
 
+    if (vueGlobale && !siteFormId) {
+      setErreurFormulaire('Selectionnez un site.')
+      return
+    }
+
     if (!produitId || !quantiteAjout || Number(quantiteAjout) <= 0) {
       setErreurFormulaire('Selectionnez un produit et une quantite valide.')
       return
     }
 
+    const quantiteEnUniteProduit = convertirQuantite(
+      Number(quantiteAjout),
+      uniteSaisie || produitChoisi.unite,
+      produitChoisi.unite,
+    )
+
     setSoumission(true)
     try {
-      const stockMisAJour = await stockService.reapprovisionner(
-        siteActif.id,
-        Number(produitId),
-        Number(quantiteAjout),
-      )
-      setStock((precedent) =>
-        precedent.map((ligne) => (ligne.produitId === stockMisAJour.produitId ? stockMisAJour : ligne)),
-      )
-      setSuccesFormulaire('Stock mis a jour avec succes.')
+      if (ligneExistante) {
+        const stockMisAJour = await stockService.reapprovisionner(
+          siteIdEffectif,
+          Number(produitId),
+          quantiteEnUniteProduit,
+        )
+        setStock((precedent) =>
+          precedent.map((ligne) =>
+            ligne.produitId === stockMisAJour.produitId && ligne.siteId === stockMisAJour.siteId
+              ? stockMisAJour
+              : ligne,
+          ),
+        )
+        setSuccesFormulaire('Stock mis a jour avec succes.')
+      } else {
+        const nouvelleLigne = await stockService.affecter({
+          siteId: siteIdEffectif,
+          produitId: Number(produitId),
+          quantiteDisponible: quantiteEnUniteProduit,
+        })
+        setStock((precedent) => [...precedent, nouvelleLigne])
+        setSuccesFormulaire('Produit ajoute au stock du site.')
+      }
+      setProduitId('')
       setQuantiteAjout('')
     } catch (err) {
       setErreurFormulaire(extraireMessageErreur(err))
@@ -64,6 +115,19 @@ export default function StockPage() {
       setSoumission(false)
     }
   }
+
+  const produitsSelectionnables = estAdmin
+    ? Object.values(produitsParId)
+    : stock.map((ligne) => produitsParId[ligne.produitId]).filter(Boolean)
+
+  const sitesActifs = sites.filter((s) => s.actif !== false)
+
+  const stockAffiche = useMemo(() => {
+    if (!vueGlobale) return stock
+    return [...stock].sort((a, b) => (a.siteNom ?? '').localeCompare(b.siteNom ?? ''))
+  }, [stock, vueGlobale])
+
+  const formulairePret = !vueGlobale || Boolean(siteFormId)
 
   if (chargement) {
     return <ChargementPage message="Chargement du stock..." />
@@ -73,7 +137,9 @@ export default function StockPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-xl font-semibold text-slate-800">Stock</h1>
-        <p className="text-sm text-slate-500">Site : {siteActif.nom}</p>
+        <p className="text-sm text-slate-500">
+          {vueGlobale ? 'Vue globale - tous les sites' : `Site : ${siteActif.nom}`}
+        </p>
       </div>
 
       {erreur && <Alerte type="error">{erreur}</Alerte>}
@@ -81,18 +147,24 @@ export default function StockPage() {
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-slate-100 text-left text-xs uppercase text-slate-400">
+            <tr className="border-b border-slate-100 text-left text-xs uppercase tracking-wide text-slate-400">
+              {vueGlobale && <th className="px-4 py-3">Site</th>}
               <th className="px-4 py-3">Produit</th>
               <th className="px-4 py-3">Categorie</th>
               <th className="px-4 py-3 text-right">Quantite disponible</th>
             </tr>
           </thead>
           <tbody>
-            {stock.length ? (
-              stock.map((ligne) => {
+            {stockAffiche.length ? (
+              stockAffiche.map((ligne) => {
                 const produit = produitsParId[ligne.produitId]
                 return (
-                  <tr key={ligne.id} className="border-b border-slate-50 last:border-0">
+                  <tr key={ligne.id} className="border-b border-slate-50 transition last:border-0 hover:bg-slate-50">
+                    {vueGlobale && (
+                      <td className="px-4 py-3">
+                        <Badge color="emerald">{ligne.siteNom ?? `Site #${ligne.siteId}`}</Badge>
+                      </td>
+                    )}
                     <td className="px-4 py-3 font-medium text-slate-700">
                       {produit?.nom ?? `Produit #${ligne.produitId}`}
                     </td>
@@ -105,8 +177,8 @@ export default function StockPage() {
               })
             ) : (
               <tr>
-                <td colSpan={3} className="px-4 py-10 text-center text-slate-400">
-                  Aucun stock enregistre pour ce site
+                <td colSpan={vueGlobale ? 4 : 3} className="px-4 py-10 text-center text-slate-400">
+                  Aucun stock enregistre
                 </td>
               </tr>
             )}
@@ -117,6 +189,29 @@ export default function StockPage() {
       <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="mb-4 text-sm font-semibold text-slate-600">Reapprovisionner</h2>
         <form onSubmit={soumettreReapprovisionnement} className="flex flex-wrap items-end gap-3">
+          {vueGlobale && (
+            <div className="min-w-[200px]">
+              <label className="mb-1 block text-xs font-medium text-slate-500" htmlFor="siteStock">
+                Site
+              </label>
+              <select
+                id="siteStock"
+                value={siteFormId}
+                onChange={(e) => {
+                  setSiteFormId(e.target.value)
+                  setProduitId('')
+                }}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              >
+                <option value="">Selectionner</option>
+                {sitesActifs.map((site) => (
+                  <option key={site.id} value={site.id}>
+                    {site.nom}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
           <div className="min-w-[220px]">
             <label className="mb-1 block text-xs font-medium text-slate-500" htmlFor="produitStock">
               Produit
@@ -125,33 +220,62 @@ export default function StockPage() {
               id="produitStock"
               value={produitId}
               onChange={(e) => setProduitId(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              disabled={!formulairePret}
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm disabled:cursor-not-allowed disabled:bg-slate-50"
             >
               <option value="">Selectionner</option>
-              {stock.map((ligne) => (
-                <option key={ligne.produitId} value={ligne.produitId}>
-                  {produitsParId[ligne.produitId]?.nom ?? `Produit #${ligne.produitId}`}
-                </option>
-              ))}
+              {produitsSelectionnables.map((produit) => {
+                const dejaEnStock = stock.some(
+                  (ligne) => ligne.produitId === produit.id && (!vueGlobale || ligne.siteId === siteIdEffectif),
+                )
+                return (
+                  <option key={produit.id} value={produit.id}>
+                    {produit.nom}
+                    {!dejaEnStock ? ' (nouveau)' : ''}
+                  </option>
+                )
+              })}
             </select>
           </div>
           <div>
             <label className="mb-1 block text-xs font-medium text-slate-500" htmlFor="quantiteAjout">
-              Quantite a ajouter
+              {ligneExistante ? 'Quantite a ajouter' : 'Quantite initiale'}
             </label>
-            <input
-              id="quantiteAjout"
-              type="number"
-              min="0.01"
-              step="0.01"
-              value={quantiteAjout}
-              onChange={(e) => setQuantiteAjout(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-            />
+            <div className="flex gap-2">
+              <input
+                id="quantiteAjout"
+                type="number"
+                min="0.01"
+                step="0.01"
+                value={quantiteAjout}
+                onChange={(e) => setQuantiteAjout(e.target.value)}
+                disabled={!formulairePret}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm disabled:cursor-not-allowed disabled:bg-slate-50"
+              />
+              {selecteurUniteVisible ? (
+                <select
+                  value={uniteSaisie}
+                  onChange={(e) => setUniteSaisie(e.target.value)}
+                  className="rounded-lg border border-slate-300 px-2 py-2 text-sm"
+                >
+                  {UNITES_POIDS.map((u) => (
+                    <option key={u} value={u}>
+                      {u}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                produitChoisi && (
+                  <span className="flex items-center rounded-lg bg-slate-50 px-3 text-sm text-slate-500">
+                    {produitChoisi.unite}
+                  </span>
+                )
+              )}
+            </div>
           </div>
           <button
             type="submit"
-            disabled={soumission}
+            disabled={soumission || !formulairePret}
             className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {soumission ? 'Envoi...' : 'Ajouter au stock'}
