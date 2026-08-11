@@ -19,3 +19,11 @@ export function modifierSites(id, siteIds) {
 export function desactiver(id) {
   return apiClient.put(`/admin/utilisateurs/${id}/desactiver`)
 }
+
+export function reactiver(id) {
+  return apiClient.put(`/admin/utilisateurs/${id}/reactiver`)
+}
+
+export function supprimer(id) {
+  return apiClient.delete(`/admin/utilisateurs/${id}`)
+}

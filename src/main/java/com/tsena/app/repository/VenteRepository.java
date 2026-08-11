@@ -25,14 +25,24 @@ public interface VenteRepository extends JpaRepository<Vente, Long> {
 
     Page<Vente> findByUtilisateurId(Long utilisateurId, Pageable pageable);
 
+    boolean existsByUtilisateurId(Long utilisateurId);
+
+    Page<Vente> findByDateVenteBetween(LocalDateTime debut, LocalDateTime fin, Pageable pageable);
+
     @Query("SELECT COALESCE(SUM(v.montantTotal), 0) FROM Vente v WHERE v.site.id = :siteId AND v.dateVente BETWEEN :debut AND :fin")
     BigDecimal sommeMontantParSite(@Param("siteId") Long siteId, @Param("debut") LocalDateTime debut, @Param("fin") LocalDateTime fin);
 
     @Query("SELECT COUNT(v) FROM Vente v WHERE v.site.id = :siteId AND v.dateVente BETWEEN :debut AND :fin")
     Long compterParSite(@Param("siteId") Long siteId, @Param("debut") LocalDateTime debut, @Param("fin") LocalDateTime fin);
 
-    @Query("SELECT COALESCE(SUM(v.quantite), 0) FROM Vente v WHERE v.site.id = :siteId AND v.dateVente BETWEEN :debut AND :fin")
-    BigDecimal sommeQuantiteParSite(@Param("siteId") Long siteId, @Param("debut") LocalDateTime debut, @Param("fin") LocalDateTime fin);
+    @Query("SELECT COALESCE(SUM(CASE WHEN v.produit.unite = com.tsena.app.entity.Unite.TONNE THEN v.quantite * 1000 "
+            + "WHEN v.produit.unite = com.tsena.app.entity.Unite.KG THEN v.quantite ELSE 0 END), 0) "
+            + "FROM Vente v WHERE v.site.id = :siteId AND v.dateVente BETWEEN :debut AND :fin")
+    BigDecimal sommeQuantitePoidsKgParSite(@Param("siteId") Long siteId, @Param("debut") LocalDateTime debut, @Param("fin") LocalDateTime fin);
+
+    @Query("SELECT COALESCE(SUM(CASE WHEN v.produit.unite = com.tsena.app.entity.Unite.SAC THEN v.quantite ELSE 0 END), 0) "
+            + "FROM Vente v WHERE v.site.id = :siteId AND v.dateVente BETWEEN :debut AND :fin")
+    BigDecimal sommeQuantiteSacsParSite(@Param("siteId") Long siteId, @Param("debut") LocalDateTime debut, @Param("fin") LocalDateTime fin);
 
     @Query("SELECT new com.tsena.app.dto.VenteAgregeeDTO(v.produit.nom, SUM(v.quantite), SUM(v.montantTotal)) "
             + "FROM Vente v WHERE v.site.id = :siteId AND v.dateVente BETWEEN :debut AND :fin "
@@ -51,8 +61,14 @@ public interface VenteRepository extends JpaRepository<Vente, Long> {
     @Query("SELECT COUNT(v) FROM Vente v WHERE v.dateVente BETWEEN :debut AND :fin")
     Long compterGlobal(@Param("debut") LocalDateTime debut, @Param("fin") LocalDateTime fin);
 
-    @Query("SELECT COALESCE(SUM(v.quantite), 0) FROM Vente v WHERE v.dateVente BETWEEN :debut AND :fin")
-    BigDecimal sommeQuantiteGlobal(@Param("debut") LocalDateTime debut, @Param("fin") LocalDateTime fin);
+    @Query("SELECT COALESCE(SUM(CASE WHEN v.produit.unite = com.tsena.app.entity.Unite.TONNE THEN v.quantite * 1000 "
+            + "WHEN v.produit.unite = com.tsena.app.entity.Unite.KG THEN v.quantite ELSE 0 END), 0) "
+            + "FROM Vente v WHERE v.dateVente BETWEEN :debut AND :fin")
+    BigDecimal sommeQuantitePoidsKgGlobal(@Param("debut") LocalDateTime debut, @Param("fin") LocalDateTime fin);
+
+    @Query("SELECT COALESCE(SUM(CASE WHEN v.produit.unite = com.tsena.app.entity.Unite.SAC THEN v.quantite ELSE 0 END), 0) "
+            + "FROM Vente v WHERE v.dateVente BETWEEN :debut AND :fin")
+    BigDecimal sommeQuantiteSacsGlobal(@Param("debut") LocalDateTime debut, @Param("fin") LocalDateTime fin);
 
     @Query("SELECT new com.tsena.app.dto.VenteAgregeeDTO(v.produit.nom, SUM(v.quantite), SUM(v.montantTotal)) "
             + "FROM Vente v WHERE v.dateVente BETWEEN :debut AND :fin "

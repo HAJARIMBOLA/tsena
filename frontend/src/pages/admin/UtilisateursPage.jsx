@@ -86,6 +86,25 @@ export default function UtilisateursPage() {
     }
   }
 
+  async function reactiverUtilisateur(id) {
+    try {
+      await utilisateurService.reactiver(id)
+      setUtilisateurs((precedent) => precedent.map((u) => (u.id === id ? { ...u, actif: true } : u)))
+    } catch (err) {
+      setErreur(extraireMessageErreur(err))
+    }
+  }
+
+  async function supprimerUtilisateur(id) {
+    if (!window.confirm('Supprimer definitivement ce compte ? Cette action est irreversible.')) return
+    try {
+      await utilisateurService.supprimer(id)
+      setUtilisateurs((precedent) => precedent.filter((u) => u.id !== id))
+    } catch (err) {
+      setErreur(extraireMessageErreur(err))
+    }
+  }
+
   function nomsSites(siteIds) {
     if (!siteIds?.length) return '-'
     return siteIds
@@ -253,6 +272,24 @@ export default function UtilisateursPage() {
                         className="rounded-md border border-red-200 px-3 py-1 text-xs text-red-600 hover:bg-red-50"
                       >
                         Desactiver
+                      </button>
+                    )}
+                    {!utilisateur.actif && (
+                      <button
+                        type="button"
+                        onClick={() => reactiverUtilisateur(utilisateur.id)}
+                        className="rounded-md border border-emerald-200 px-3 py-1 text-xs text-emerald-600 hover:bg-emerald-50"
+                      >
+                        Reactiver
+                      </button>
+                    )}
+                    {utilisateur.role === 'EMPLOYE' && (
+                      <button
+                        type="button"
+                        onClick={() => supprimerUtilisateur(utilisateur.id)}
+                        className="rounded-md border border-red-200 px-3 py-1 text-xs text-red-600 hover:bg-red-50"
+                      >
+                        Supprimer
                       </button>
                     )}
                   </div>

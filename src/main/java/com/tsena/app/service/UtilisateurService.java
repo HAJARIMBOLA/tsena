@@ -14,6 +14,7 @@ import com.tsena.app.exception.ResourceNotFoundException;
 import com.tsena.app.exception.SetupDejaEffectueException;
 import com.tsena.app.repository.SiteRepository;
 import com.tsena.app.repository.UtilisateurRepository;
+import com.tsena.app.repository.VenteRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,13 +30,16 @@ public class UtilisateurService {
 
     private final UtilisateurRepository utilisateurRepository;
     private final SiteRepository siteRepository;
+    private final VenteRepository venteRepository;
     private final PasswordEncoder passwordEncoder;
 
     public UtilisateurService(UtilisateurRepository utilisateurRepository,
                                SiteRepository siteRepository,
+                               VenteRepository venteRepository,
                                PasswordEncoder passwordEncoder) {
         this.utilisateurRepository = utilisateurRepository;
         this.siteRepository = siteRepository;
+        this.venteRepository = venteRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -103,6 +107,27 @@ public class UtilisateurService {
             throw new OperationNonAutoriseeException("Vous ne pouvez pas desactiver votre propre compte.");
         }
         utilisateur.setActif(false);
+    }
+
+    public void reactiver(Long id) {
+        Utilisateur utilisateur = getOuLeverException(id);
+        utilisateur.setActif(true);
+    }
+
+    public void supprimer(Long id) {
+        Utilisateur utilisateur = getOuLeverException(id);
+
+        if (utilisateur.getRole() != Role.EMPLOYE) {
+            throw new OperationNonAutoriseeException(
+                    "Seuls les comptes employe peuvent etre supprimes definitivement. Desactivez plutot ce compte administrateur.");
+        }
+
+        if (venteRepository.existsByUtilisateurId(id)) {
+            throw new ConflitException(
+                    "Ce compte a des ventes associees : desactivez-le plutot que de le supprimer.");
+        }
+
+        utilisateurRepository.delete(utilisateur);
     }
 
     @Transactional(readOnly = true)
