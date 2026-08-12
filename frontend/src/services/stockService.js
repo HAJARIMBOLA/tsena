@@ -1,7 +1,7 @@
 import apiClient from '../api/apiClient'
 
 export function affecter(stock) {
-  return apiClient.post('/admin/stock', stock).then((res) => res.data)
+  return apiClient.post('/stock', stock).then((res) => res.data)
 }
 
 export function reapprovisionner(siteId, produitId, quantite) {

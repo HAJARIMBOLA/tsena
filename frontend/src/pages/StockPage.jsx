@@ -162,9 +162,7 @@ export default function StockPage() {
     }
   }
 
-  const produitsSelectionnables = estAdmin
-    ? Object.values(produitsParId)
-    : stock.map((ligne) => produitsParId[ligne.produitId]).filter(Boolean)
+  const produitsSelectionnables = Object.values(produitsParId)
 
   const sitesActifs = sites.filter((s) => s.actif !== false)
 

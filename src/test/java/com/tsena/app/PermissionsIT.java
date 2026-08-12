@@ -25,6 +25,7 @@ import java.util.Set;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -53,6 +54,7 @@ class PermissionsIT extends AbstractIntegrationTest {
 
     private Site siteAutorise;
     private Site siteNonAutorise;
+    private Produit produit;
     private Utilisateur admin;
     private Utilisateur employe;
 
@@ -70,7 +72,7 @@ class PermissionsIT extends AbstractIntegrationTest {
                 .actif(true)
                 .build());
 
-        Produit produit = produitRepository.save(Produit.builder()
+        produit = produitRepository.save(Produit.builder()
                 .nom("Riz")
                 .categorie("Cereales")
                 .unite(Unite.SAC)
@@ -129,6 +131,59 @@ class PermissionsIT extends AbstractIntegrationTest {
         mockMvc.perform(get("/api/stock/site/{siteId}", siteNonAutorise.getId())
                         .with(authentifieComme(admin)))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void employeAutoriseAffecterNouveauProduitSurSonPropreSite() throws Exception {
+        Produit sucre = produitRepository.save(Produit.builder()
+                .nom("Sucre")
+                .categorie("Epicerie")
+                .unite(Unite.KG)
+                .actif(true)
+                .build());
+
+        String payload = """
+                { "siteId": %d, "produitId": %d, "quantiteDisponible": 30, "prixUnitaire": 3000 }
+                """.formatted(siteAutorise.getId(), sucre.getId());
+
+        mockMvc.perform(post("/api/stock")
+                        .with(authentifieComme(employe))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payload))
+                .andExpect(status().isCreated());
+    }
+
+    @Test
+    void employeRefuseAffecterSurSiteNonAutorise() throws Exception {
+        Produit sucre = produitRepository.save(Produit.builder()
+                .nom("Sucre")
+                .categorie("Epicerie")
+                .unite(Unite.KG)
+                .actif(true)
+                .build());
+
+        String payload = """
+                { "siteId": %d, "produitId": %d, "quantiteDisponible": 30, "prixUnitaire": 3000 }
+                """.formatted(siteNonAutorise.getId(), sucre.getId());
+
+        mockMvc.perform(post("/api/stock")
+                        .with(authentifieComme(employe))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payload))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void employeRefuseModifierPrixMemeSurSonPropreSite() throws Exception {
+        String payload = """
+                { "prixUnitaire": 25000 }
+                """;
+
+        mockMvc.perform(put("/api/admin/stock/{siteId}/{produitId}/prix", siteAutorise.getId(), produit.getId())
+                        .with(authentifieComme(employe))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payload))
+                .andExpect(status().isForbidden());
     }
 
     @Test

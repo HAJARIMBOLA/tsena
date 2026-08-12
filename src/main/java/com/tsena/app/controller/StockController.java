@@ -28,8 +28,8 @@ public class StockController {
         this.stockSiteService = stockSiteService;
     }
 
-    @PostMapping("/admin/stock")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/stock")
+    @PreAuthorize("hasRole('ADMIN') or @siteAccessService.aAcces(#dto.siteId, authentication)")
     public ResponseEntity<StockSiteDTO> affecter(@Valid @RequestBody StockSiteDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(stockSiteService.affecter(dto));
     }

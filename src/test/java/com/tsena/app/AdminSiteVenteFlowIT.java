@@ -80,7 +80,7 @@ class AdminSiteVenteFlowIT extends AbstractIntegrationTest {
                 { "siteId": %d, "produitId": %d, "quantiteDisponible": 50, "prixUnitaire": 15000 }
                 """.formatted(siteId, produit.getId());
 
-        mockMvc.perform(post("/api/admin/stock")
+        mockMvc.perform(post("/api/stock")
                         .with(authentifieComme(admin))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payloadStock))
