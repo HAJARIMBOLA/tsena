@@ -80,7 +80,7 @@ class AdminSiteVenteFlowIT extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$[?(@.id == " + siteId + ")]").exists());
 
         String payloadStock = """
-                { "siteId": %d, "produitId": %d, "quantiteDisponible": 50 }
+                { "siteId": %d, "produitId": %d, "quantiteDisponible": 50, "prixUnitaire": 15000 }
                 """.formatted(siteId, produit.getId());
 
         mockMvc.perform(post("/api/admin/stock")

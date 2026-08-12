@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import * as produitService from '../services/produitService'
+import * as stockService from '../services/stockService'
 import * as venteService from '../services/venteService'
 import { useSite } from '../hooks/useSite'
 import { extraireMessageErreur } from '../api/apiError'
@@ -10,8 +11,9 @@ import { convertirQuantite, estUnitePoids, UNITES_POIDS } from '../utils/unite'
 export default function VentePage() {
   const { siteActif, vueGlobale, sites } = useSite()
   const [produits, setProduits] = useState([])
-  const [chargementProduits, setChargementProduits] = useState(true)
-  const [erreurProduits, setErreurProduits] = useState(null)
+  const [stock, setStock] = useState([])
+  const [chargement, setChargement] = useState(true)
+  const [erreurChargement, setErreurChargement] = useState(null)
 
   const [siteFormId, setSiteFormId] = useState('')
   const [produitId, setProduitId] = useState('')
@@ -23,29 +25,44 @@ export default function VentePage() {
 
   useEffect(() => {
     let annule = false
-    produitService
-      .listerActifs()
-      .then((data) => {
-        if (!annule) setProduits(data)
+    setChargement(true)
+    setErreurChargement(null)
+    const requeteStock = vueGlobale ? stockService.listerTout() : stockService.listerParSite(siteActif.id)
+    Promise.all([requeteStock, produitService.listerActifs()])
+      .then(([stockData, produitsData]) => {
+        if (!annule) {
+          setStock(stockData)
+          setProduits(produitsData)
+        }
       })
       .catch((err) => {
-        if (!annule) setErreurProduits(extraireMessageErreur(err))
+        if (!annule) setErreurChargement(extraireMessageErreur(err))
       })
       .finally(() => {
-        if (!annule) setChargementProduits(false)
+        if (!annule) setChargement(false)
       })
     return () => {
       annule = true
     }
-  }, [])
+  }, [siteActif, vueGlobale])
 
   const siteIdEffectif = vueGlobale ? Number(siteFormId) || null : siteActif.id
   const sitesActifs = sites.filter((s) => s.actif !== false)
   const formulairePret = !vueGlobale || Boolean(siteFormId)
 
+  const stockDuSite = useMemo(
+    () => (siteIdEffectif ? stock.filter((ligne) => ligne.siteId === siteIdEffectif) : []),
+    [stock, siteIdEffectif],
+  )
+
   const produitSelectionne = useMemo(
     () => produits.find((p) => String(p.id) === String(produitId)) ?? null,
     [produits, produitId],
+  )
+
+  const ligneStockSelectionnee = useMemo(
+    () => stockDuSite.find((ligne) => String(ligne.produitId) === String(produitId)) ?? null,
+    [stockDuSite, produitId],
   )
 
   const selecteurUniteVisible = Boolean(produitSelectionne) && estUnitePoids(produitSelectionne.unite)
@@ -62,9 +79,9 @@ export default function VentePage() {
   }, [produitSelectionne, quantite, uniteSaisie])
 
   const montantEstime = useMemo(() => {
-    if (!produitSelectionne) return 0
-    return quantiteEnUniteProduit * Number(produitSelectionne.prixUnitaire)
-  }, [produitSelectionne, quantiteEnUniteProduit])
+    if (!ligneStockSelectionnee) return 0
+    return quantiteEnUniteProduit * Number(ligneStockSelectionnee.prixUnitaire)
+  }, [ligneStockSelectionnee, quantiteEnUniteProduit])
 
   async function soumettre(e) {
     e.preventDefault()
@@ -97,7 +114,7 @@ export default function VentePage() {
     }
   }
 
-  if (chargementProduits) {
+  if (chargement) {
     return <ChargementPage message="Chargement des produits..." />
   }
 
@@ -110,7 +127,7 @@ export default function VentePage() {
         </p>
       </div>
 
-      {erreurProduits && <Alerte type="error">{erreurProduits}</Alerte>}
+      {erreurChargement && <Alerte type="error">{erreurChargement}</Alerte>}
 
       <form onSubmit={soumettre} className="space-y-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         {vueGlobale && (
@@ -121,7 +138,10 @@ export default function VentePage() {
             <select
               id="siteVente"
               value={siteFormId}
-              onChange={(e) => setSiteFormId(e.target.value)}
+              onChange={(e) => {
+                setSiteFormId(e.target.value)
+                setProduitId('')
+              }}
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
             >
               <option value="">Selectionner un site</option>
@@ -146,11 +166,15 @@ export default function VentePage() {
             className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 disabled:cursor-not-allowed disabled:bg-slate-50"
           >
             <option value="">Selectionner un produit</option>
-            {produits.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.nom} - {formaterMontant(p.prixUnitaire)} / {p.unite}
-              </option>
-            ))}
+            {stockDuSite.map((ligne) => {
+              const produit = produits.find((p) => p.id === ligne.produitId)
+              if (!produit) return null
+              return (
+                <option key={produit.id} value={produit.id}>
+                  {produit.nom} - {formaterMontant(ligne.prixUnitaire)} / {produit.unite}
+                </option>
+              )
+            })}
           </select>
         </div>
 

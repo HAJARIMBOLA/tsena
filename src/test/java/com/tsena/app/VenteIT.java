@@ -87,12 +87,14 @@ class VenteIT extends AbstractIntegrationTest {
                 .site(siteAutorise)
                 .produit(produit)
                 .quantiteDisponible(new BigDecimal("10"))
+                .prixUnitaire(new BigDecimal("1000"))
                 .build());
 
         stockSiteRepository.save(StockSite.builder()
                 .site(siteNonAutorise)
                 .produit(produit)
                 .quantiteDisponible(new BigDecimal("10"))
+                .prixUnitaire(new BigDecimal("1000"))
                 .build());
 
         Set<Site> sitesAutorises = new HashSet<>(Set.of(siteAutorise));

@@ -1,5 +1,6 @@
 package com.tsena.app.controller;
 
+import com.tsena.app.dto.ModifierPrixDTO;
 import com.tsena.app.dto.ReapprovisionnementDTO;
 import com.tsena.app.dto.StockSiteDTO;
 import com.tsena.app.service.StockSiteService;
@@ -39,6 +40,14 @@ public class StockController {
                                           @PathVariable Long produitId,
                                           @Valid @RequestBody ReapprovisionnementDTO dto) {
         return stockSiteService.reapprovisionner(siteId, produitId, dto.getQuantite());
+    }
+
+    @PutMapping("/admin/stock/{siteId}/{produitId}/prix")
+    @PreAuthorize("hasRole('ADMIN')")
+    public StockSiteDTO modifierPrix(@PathVariable Long siteId,
+                                      @PathVariable Long produitId,
+                                      @Valid @RequestBody ModifierPrixDTO dto) {
+        return stockSiteService.modifierPrix(siteId, produitId, dto.getPrixUnitaire());
     }
 
     @GetMapping("/stock/site/{siteId}")

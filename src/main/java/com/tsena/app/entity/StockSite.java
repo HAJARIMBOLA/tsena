@@ -11,6 +11,7 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import jakarta.persistence.Version;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -49,6 +50,10 @@ public class StockSite {
     @NotNull
     @PositiveOrZero
     private BigDecimal quantiteDisponible;
+
+    @NotNull
+    @Positive
+    private BigDecimal prixUnitaire;
 
     @Version
     private Long version;

@@ -82,12 +82,14 @@ class PermissionsIT extends AbstractIntegrationTest {
                 .site(siteAutorise)
                 .produit(produit)
                 .quantiteDisponible(new BigDecimal("100"))
+                .prixUnitaire(new BigDecimal("20000"))
                 .build());
 
         stockSiteRepository.save(StockSite.builder()
                 .site(siteNonAutorise)
                 .produit(produit)
                 .quantiteDisponible(new BigDecimal("50"))
+                .prixUnitaire(new BigDecimal("20000"))
                 .build());
 
         admin = utilisateurRepository.save(Utilisateur.builder()

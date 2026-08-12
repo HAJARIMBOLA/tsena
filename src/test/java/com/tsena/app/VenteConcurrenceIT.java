@@ -75,6 +75,7 @@ class VenteConcurrenceIT extends AbstractIntegrationTest {
                 .site(site)
                 .produit(produit)
                 .quantiteDisponible(new BigDecimal("5"))
+                .prixUnitaire(new BigDecimal("1000"))
                 .build());
 
         Set<Site> sitesAutorises = new HashSet<>(Set.of(site));

@@ -82,7 +82,7 @@ public class VenteService {
         Utilisateur utilisateur = utilisateurRepository.findById(idUtilisateurConnecte(authentication))
                 .orElseThrow(() -> new ResourceNotFoundException("Utilisateur connecte introuvable"));
 
-        BigDecimal montantTotal = dto.getQuantite().multiply(produit.getPrixUnitaire());
+        BigDecimal montantTotal = dto.getQuantite().multiply(stock.getPrixUnitaire());
 
         stock.setQuantiteDisponible(stock.getQuantiteDisponible().subtract(dto.getQuantite()));
 

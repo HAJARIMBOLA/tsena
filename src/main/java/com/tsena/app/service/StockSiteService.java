@@ -45,6 +45,7 @@ public class StockSiteService {
                 .site(site)
                 .produit(produit)
                 .quantiteDisponible(dto.getQuantiteDisponible())
+                .prixUnitaire(dto.getPrixUnitaire())
                 .build();
 
         return toDto(stockSiteRepository.save(stockSite));
@@ -56,6 +57,15 @@ public class StockSiteService {
                         "Aucun stock trouve pour le site " + siteId + " et le produit " + produitId));
 
         stockSite.setQuantiteDisponible(stockSite.getQuantiteDisponible().add(quantite));
+        return toDto(stockSite);
+    }
+
+    public StockSiteDTO modifierPrix(Long siteId, Long produitId, BigDecimal nouveauPrix) {
+        StockSite stockSite = stockSiteRepository.findBySiteIdAndProduitId(siteId, produitId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Aucun stock trouve pour le site " + siteId + " et le produit " + produitId));
+
+        stockSite.setPrixUnitaire(nouveauPrix);
         return toDto(stockSite);
     }
 
@@ -83,6 +93,7 @@ public class StockSiteService {
                 .siteNom(stockSite.getSite().getNom())
                 .produitId(stockSite.getProduit().getId())
                 .quantiteDisponible(stockSite.getQuantiteDisponible())
+                .prixUnitaire(stockSite.getPrixUnitaire())
                 .build();
     }
 }

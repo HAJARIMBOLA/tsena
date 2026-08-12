@@ -5,7 +5,7 @@ import { useAuth } from '../hooks/useAuth'
 import { useSite } from '../hooks/useSite'
 import { extraireMessageErreur } from '../api/apiError'
 import { Alerte, ChargementPage } from '../components/PageState'
-import { formaterQuantite } from '../utils/format'
+import { formaterMontant, formaterQuantite } from '../utils/format'
 import { convertirQuantite, estUnitePoids, UNITES_POIDS } from '../utils/unite'
 import Badge from '../components/Badge'
 
@@ -20,10 +20,16 @@ export default function StockPage() {
   const [siteFormId, setSiteFormId] = useState('')
   const [produitId, setProduitId] = useState('')
   const [quantiteAjout, setQuantiteAjout] = useState('')
+  const [prixUnitaireAjout, setPrixUnitaireAjout] = useState('')
   const [uniteSaisie, setUniteSaisie] = useState('')
   const [soumission, setSoumission] = useState(false)
   const [erreurFormulaire, setErreurFormulaire] = useState(null)
   const [succesFormulaire, setSuccesFormulaire] = useState(null)
+
+  const [editionPrixId, setEditionPrixId] = useState(null)
+  const [nouveauPrix, setNouveauPrix] = useState('')
+  const [erreurPrix, setErreurPrix] = useState(null)
+  const [soumissionPrix, setSoumissionPrix] = useState(false)
 
   function charger() {
     setChargement(true)
@@ -58,6 +64,7 @@ export default function StockPage() {
 
   useEffect(() => {
     setUniteSaisie(produitChoisi?.unite ?? '')
+    setPrixUnitaireAjout(produitChoisi?.prixUnitaire != null ? String(produitChoisi.prixUnitaire) : '')
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [produitChoisi?.id])
 
@@ -73,6 +80,11 @@ export default function StockPage() {
 
     if (!produitId || !quantiteAjout || Number(quantiteAjout) <= 0) {
       setErreurFormulaire('Selectionnez un produit et une quantite valide.')
+      return
+    }
+
+    if (!ligneExistante && (!prixUnitaireAjout || Number(prixUnitaireAjout) <= 0)) {
+      setErreurFormulaire('Indiquez un prix unitaire valide.')
       return
     }
 
@@ -103,16 +115,50 @@ export default function StockPage() {
           siteId: siteIdEffectif,
           produitId: Number(produitId),
           quantiteDisponible: quantiteEnUniteProduit,
+          prixUnitaire: Number(prixUnitaireAjout),
         })
         setStock((precedent) => [...precedent, nouvelleLigne])
         setSuccesFormulaire('Produit ajoute au stock du site.')
       }
       setProduitId('')
       setQuantiteAjout('')
+      setPrixUnitaireAjout('')
     } catch (err) {
       setErreurFormulaire(extraireMessageErreur(err))
     } finally {
       setSoumission(false)
+    }
+  }
+
+  function commencerEditionPrix(ligne) {
+    setEditionPrixId(ligne.id)
+    setNouveauPrix(String(ligne.prixUnitaire))
+    setErreurPrix(null)
+  }
+
+  function annulerEditionPrix() {
+    setEditionPrixId(null)
+    setNouveauPrix('')
+    setErreurPrix(null)
+  }
+
+  async function enregistrerPrix(ligne) {
+    if (!nouveauPrix || Number(nouveauPrix) <= 0) {
+      setErreurPrix('Indiquez un prix valide.')
+      return
+    }
+
+    setSoumissionPrix(true)
+    try {
+      const ligneMiseAJour = await stockService.modifierPrix(ligne.siteId, ligne.produitId, Number(nouveauPrix))
+      setStock((precedent) =>
+        precedent.map((l) => (l.id === ligneMiseAJour.id ? ligneMiseAJour : l)),
+      )
+      annulerEditionPrix()
+    } catch (err) {
+      setErreurPrix(extraireMessageErreur(err))
+    } finally {
+      setSoumissionPrix(false)
     }
   }
 
@@ -152,12 +198,14 @@ export default function StockPage() {
               <th className="px-4 py-3">Produit</th>
               <th className="px-4 py-3">Categorie</th>
               <th className="px-4 py-3 text-right">Quantite disponible</th>
+              <th className="px-4 py-3 text-right">Prix unitaire</th>
             </tr>
           </thead>
           <tbody>
             {stockAffiche.length ? (
               stockAffiche.map((ligne) => {
                 const produit = produitsParId[ligne.produitId]
+                const enEdition = editionPrixId === ligne.id
                 return (
                   <tr key={ligne.id} className="border-b border-slate-50 transition last:border-0 hover:bg-slate-50">
                     {vueGlobale && (
@@ -172,12 +220,54 @@ export default function StockPage() {
                     <td className="px-4 py-3 text-right text-slate-700">
                       {formaterQuantite(ligne.quantiteDisponible)} {produit?.unite ?? ''}
                     </td>
+                    <td className="px-4 py-3 text-right">
+                      {enEdition ? (
+                        <div className="flex items-center justify-end gap-2">
+                          <input
+                            type="number"
+                            min="0.01"
+                            step="0.01"
+                            value={nouveauPrix}
+                            onChange={(e) => setNouveauPrix(e.target.value)}
+                            className="w-24 rounded-lg border border-slate-300 px-2 py-1 text-right text-sm"
+                          />
+                          <button
+                            type="button"
+                            disabled={soumissionPrix}
+                            onClick={() => enregistrerPrix(ligne)}
+                            className="rounded-lg bg-emerald-600 px-2 py-1 text-xs font-medium text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            OK
+                          </button>
+                          <button
+                            type="button"
+                            onClick={annulerEditionPrix}
+                            className="rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-500 hover:bg-slate-50"
+                          >
+                            Annuler
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-end gap-2">
+                          <span className="text-slate-700">{formaterMontant(ligne.prixUnitaire)}</span>
+                          {estAdmin && (
+                            <button
+                              type="button"
+                              onClick={() => commencerEditionPrix(ligne)}
+                              className="text-xs font-medium text-emerald-600 hover:text-emerald-700"
+                            >
+                              Modifier
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </td>
                   </tr>
                 )
               })
             ) : (
               <tr>
-                <td colSpan={vueGlobale ? 4 : 3} className="px-4 py-10 text-center text-slate-400">
+                <td colSpan={vueGlobale ? 5 : 4} className="px-4 py-10 text-center text-slate-400">
                   Aucun stock enregistre
                 </td>
               </tr>
@@ -185,6 +275,8 @@ export default function StockPage() {
           </tbody>
         </table>
       </div>
+
+      {erreurPrix && <Alerte type="error">{erreurPrix}</Alerte>}
 
       <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="mb-4 text-sm font-semibold text-slate-600">Reapprovisionner</h2>
@@ -273,6 +365,23 @@ export default function StockPage() {
               )}
             </div>
           </div>
+          {!ligneExistante && (
+            <div>
+              <label className="mb-1 block text-xs font-medium text-slate-500" htmlFor="prixUnitaireAjout">
+                Prix unitaire
+              </label>
+              <input
+                id="prixUnitaireAjout"
+                type="number"
+                min="0.01"
+                step="0.01"
+                value={prixUnitaireAjout}
+                onChange={(e) => setPrixUnitaireAjout(e.target.value)}
+                disabled={!formulairePret}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm disabled:cursor-not-allowed disabled:bg-slate-50"
+              />
+            </div>
+          )}
           <button
             type="submit"
             disabled={soumission || !formulairePret}

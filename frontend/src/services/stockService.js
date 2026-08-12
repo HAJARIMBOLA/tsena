@@ -8,6 +8,10 @@ export function reapprovisionner(siteId, produitId, quantite) {
   return apiClient.put(`/stock/${siteId}/${produitId}`, { quantite }).then((res) => res.data)
 }
 
+export function modifierPrix(siteId, produitId, prixUnitaire) {
+  return apiClient.put(`/admin/stock/${siteId}/${produitId}/prix`, { prixUnitaire }).then((res) => res.data)
+}
+
 export function listerParSite(siteId) {
   return apiClient.get(`/stock/site/${siteId}`).then((res) => res.data)
 }

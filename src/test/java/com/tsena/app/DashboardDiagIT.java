@@ -77,6 +77,7 @@ class DashboardDiagIT extends AbstractIntegrationTest {
                 .site(site)
                 .produit(produit)
                 .quantiteDisponible(new BigDecimal("100"))
+                .prixUnitaire(new BigDecimal("10000"))
                 .build());
 
         String payloadVente = """
