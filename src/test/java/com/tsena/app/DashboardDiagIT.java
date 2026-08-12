@@ -83,13 +83,13 @@ class DashboardDiagIT extends AbstractIntegrationTest {
                 { "siteId": %d, "produitId": %d, "quantite": 2 }
                 """.formatted(site.getId(), produit.getId());
 
-        mockMvc.perform(post("/ventes")
+        mockMvc.perform(post("/api/ventes")
                         .with(authentifieComme(admin))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payloadVente))
                 .andExpect(status().isCreated());
 
-        mockMvc.perform(get("/dashboard/site/{siteId}", site.getId())
+        mockMvc.perform(get("/api/dashboard/site/{siteId}", site.getId())
                         .param("periode", "jour")
                         .with(authentifieComme(admin)))
                 .andExpect(status().isOk())

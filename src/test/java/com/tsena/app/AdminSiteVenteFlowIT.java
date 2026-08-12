@@ -66,7 +66,7 @@ class AdminSiteVenteFlowIT extends AbstractIntegrationTest {
                 { "nom": "Site Nouvellement Cree", "localisation": "Fianarantsoa" }
                 """;
 
-        String reponseSite = mockMvc.perform(post("/admin/sites")
+        String reponseSite = mockMvc.perform(post("/api/admin/sites")
                         .with(authentifieComme(admin))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payloadSite))
@@ -75,7 +75,7 @@ class AdminSiteVenteFlowIT extends AbstractIntegrationTest {
 
         Long siteId = ((Number) JsonPath.read(reponseSite, "$.id")).longValue();
 
-        mockMvc.perform(get("/mes-sites").with(authentifieComme(admin)))
+        mockMvc.perform(get("/api/mes-sites").with(authentifieComme(admin)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[?(@.id == " + siteId + ")]").exists());
 
@@ -83,7 +83,7 @@ class AdminSiteVenteFlowIT extends AbstractIntegrationTest {
                 { "siteId": %d, "produitId": %d, "quantiteDisponible": 50 }
                 """.formatted(siteId, produit.getId());
 
-        mockMvc.perform(post("/admin/stock")
+        mockMvc.perform(post("/api/admin/stock")
                         .with(authentifieComme(admin))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payloadStock))
@@ -94,14 +94,14 @@ class AdminSiteVenteFlowIT extends AbstractIntegrationTest {
                 { "siteId": %d, "produitId": %d, "quantite": 3 }
                 """.formatted(siteId, produit.getId());
 
-        mockMvc.perform(post("/ventes")
+        mockMvc.perform(post("/api/ventes")
                         .with(authentifieComme(admin))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payloadVente))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.montantTotal").value(45000));
 
-        mockMvc.perform(get("/stock/site/{siteId}", siteId).with(authentifieComme(admin)))
+        mockMvc.perform(get("/api/stock/site/{siteId}", siteId).with(authentifieComme(admin)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].quantiteDisponible").value(47));
     }

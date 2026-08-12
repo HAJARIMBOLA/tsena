@@ -10,14 +10,7 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
     proxy: {
-      '/auth': 'http://localhost:8080',
-      '/admin': 'http://localhost:8080',
-      '/ventes': 'http://localhost:8080',
-      '/stock': 'http://localhost:8080',
-      '/dashboard': 'http://localhost:8080',
-      '/mes-sites': 'http://localhost:8080',
-      '/produits': 'http://localhost:8080',
-      '/moi': 'http://localhost:8080',
+      '/api': 'http://localhost:8080',
     },
   },
   build: {

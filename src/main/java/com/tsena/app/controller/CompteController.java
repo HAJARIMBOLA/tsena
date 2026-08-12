@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/moi")
+@RequestMapping("/api/moi")
 public class CompteController {
 
     private final UtilisateurService utilisateurService;

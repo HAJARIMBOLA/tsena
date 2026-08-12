@@ -60,7 +60,7 @@ class UtilisateurAdminIT extends AbstractIntegrationTest {
                 .actif(true)
                 .build());
 
-        mockMvc.perform(put("/admin/utilisateurs/{id}/desactiver", admin.getId())
+        mockMvc.perform(put("/api/admin/utilisateurs/{id}/desactiver", admin.getId())
                         .with(authentifieComme(admin)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Vous ne pouvez pas desactiver votre propre compte."));
@@ -86,7 +86,7 @@ class UtilisateurAdminIT extends AbstractIntegrationTest {
                 .actif(true)
                 .build());
 
-        mockMvc.perform(put("/admin/utilisateurs/{id}/desactiver", autre.getId())
+        mockMvc.perform(put("/api/admin/utilisateurs/{id}/desactiver", autre.getId())
                         .with(authentifieComme(admin)))
                 .andExpect(status().isNoContent());
 
@@ -111,7 +111,7 @@ class UtilisateurAdminIT extends AbstractIntegrationTest {
                 .actif(false)
                 .build());
 
-        mockMvc.perform(put("/admin/utilisateurs/{id}/reactiver", employe.getId())
+        mockMvc.perform(put("/api/admin/utilisateurs/{id}/reactiver", employe.getId())
                         .with(authentifieComme(admin)))
                 .andExpect(status().isNoContent());
 
@@ -136,7 +136,7 @@ class UtilisateurAdminIT extends AbstractIntegrationTest {
                 .actif(true)
                 .build());
 
-        mockMvc.perform(delete("/admin/utilisateurs/{id}", employe.getId())
+        mockMvc.perform(delete("/api/admin/utilisateurs/{id}", employe.getId())
                         .with(authentifieComme(admin)))
                 .andExpect(status().isNoContent());
 
@@ -161,7 +161,7 @@ class UtilisateurAdminIT extends AbstractIntegrationTest {
                 .actif(true)
                 .build());
 
-        mockMvc.perform(delete("/admin/utilisateurs/{id}", autreAdmin.getId())
+        mockMvc.perform(delete("/api/admin/utilisateurs/{id}", autreAdmin.getId())
                         .with(authentifieComme(admin)))
                 .andExpect(status().isBadRequest());
 
@@ -209,7 +209,7 @@ class UtilisateurAdminIT extends AbstractIntegrationTest {
                 .dateVente(LocalDateTime.now())
                 .build());
 
-        mockMvc.perform(delete("/admin/utilisateurs/{id}", employe.getId())
+        mockMvc.perform(delete("/api/admin/utilisateurs/{id}", employe.getId())
                         .with(authentifieComme(admin)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message").value(

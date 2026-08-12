@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Set;
 
 @RestController
-@RequestMapping("/admin/utilisateurs")
+@RequestMapping("/api/admin/utilisateurs")
 @PreAuthorize("hasRole('ADMIN')")
 public class UtilisateurController {
 

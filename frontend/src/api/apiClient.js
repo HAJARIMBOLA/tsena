@@ -11,7 +11,7 @@ export function setUnauthorizedHandler(handler) {
   unauthorizedHandler = handler
 }
 
-const apiClient = axios.create()
+const apiClient = axios.create({ baseURL: '/api' })
 
 apiClient.interceptors.request.use((config) => {
   if (authToken) {

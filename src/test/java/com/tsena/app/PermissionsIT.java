@@ -111,21 +111,21 @@ class PermissionsIT extends AbstractIntegrationTest {
 
     @Test
     void employeRefuseSurSiteNonAutorise() throws Exception {
-        mockMvc.perform(get("/stock/site/{siteId}", siteNonAutorise.getId())
+        mockMvc.perform(get("/api/stock/site/{siteId}", siteNonAutorise.getId())
                         .with(authentifieComme(employe)))
                 .andExpect(status().isForbidden());
     }
 
     @Test
     void employeAutoriseSurSonPropreSite() throws Exception {
-        mockMvc.perform(get("/stock/site/{siteId}", siteAutorise.getId())
+        mockMvc.perform(get("/api/stock/site/{siteId}", siteAutorise.getId())
                         .with(authentifieComme(employe)))
                 .andExpect(status().isOk());
     }
 
     @Test
     void adminAutoriseSurNimporteQuelSite() throws Exception {
-        mockMvc.perform(get("/stock/site/{siteId}", siteNonAutorise.getId())
+        mockMvc.perform(get("/api/stock/site/{siteId}", siteNonAutorise.getId())
                         .with(authentifieComme(admin)))
                 .andExpect(status().isOk());
     }
@@ -142,7 +142,7 @@ class PermissionsIT extends AbstractIntegrationTest {
                 }
                 """;
 
-        mockMvc.perform(post("/admin/utilisateurs")
+        mockMvc.perform(post("/api/admin/utilisateurs")
                         .with(authentifieComme(employe))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payload))

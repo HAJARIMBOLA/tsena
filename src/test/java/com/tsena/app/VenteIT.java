@@ -112,7 +112,7 @@ class VenteIT extends AbstractIntegrationTest {
                 { "siteId": %d, "produitId": %d, "quantite": 3 }
                 """.formatted(siteAutorise.getId(), produit.getId());
 
-        mockMvc.perform(post("/ventes")
+        mockMvc.perform(post("/api/ventes")
                         .with(authentifieComme(employe))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payload))
@@ -132,7 +132,7 @@ class VenteIT extends AbstractIntegrationTest {
                 { "siteId": %d, "produitId": %d, "quantite": 999 }
                 """.formatted(siteAutorise.getId(), produit.getId());
 
-        mockMvc.perform(post("/ventes")
+        mockMvc.perform(post("/api/ventes")
                         .with(authentifieComme(employe))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payload))
@@ -150,7 +150,7 @@ class VenteIT extends AbstractIntegrationTest {
                 { "siteId": %d, "produitId": %d, "quantite": 1 }
                 """.formatted(siteNonAutorise.getId(), produit.getId());
 
-        mockMvc.perform(post("/ventes")
+        mockMvc.perform(post("/api/ventes")
                         .with(authentifieComme(employe))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payload))

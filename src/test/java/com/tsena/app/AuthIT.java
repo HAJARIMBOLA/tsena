@@ -46,7 +46,7 @@ class AuthIT extends AbstractIntegrationTest {
                 { "email": "admin-login@tsena.mg", "motDePasse": "%s" }
                 """.formatted(MOT_DE_PASSE_CLAIR);
 
-        mockMvc.perform(post("/auth/login")
+        mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payload))
                 .andExpect(status().isOk())
@@ -69,7 +69,7 @@ class AuthIT extends AbstractIntegrationTest {
                 { "email": "employe-login@tsena.mg", "motDePasse": "MauvaisMotDePasse" }
                 """;
 
-        mockMvc.perform(post("/auth/login")
+        mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payload))
                 .andExpect(status().isUnauthorized());
@@ -77,7 +77,7 @@ class AuthIT extends AbstractIntegrationTest {
 
     @Test
     void requeteSansToken_401() throws Exception {
-        mockMvc.perform(get("/admin/sites"))
+        mockMvc.perform(get("/api/admin/sites"))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -95,7 +95,7 @@ class AuthIT extends AbstractIntegrationTest {
                 { "email": "admin-token@tsena.mg", "motDePasse": "%s" }
                 """.formatted(MOT_DE_PASSE_CLAIR);
 
-        String reponse = mockMvc.perform(post("/auth/login")
+        String reponse = mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payload))
                 .andExpect(status().isOk())
@@ -103,7 +103,7 @@ class AuthIT extends AbstractIntegrationTest {
 
         String token = JsonPath.read(reponse, "$.token");
 
-        mockMvc.perform(get("/admin/sites").header("Authorization", "Bearer " + token))
+        mockMvc.perform(get("/api/admin/sites").header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk());
     }
 }

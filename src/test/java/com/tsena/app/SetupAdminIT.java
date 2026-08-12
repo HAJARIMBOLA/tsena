@@ -60,7 +60,7 @@ class SetupAdminIT {
     void setupRequired_retourneTrue_surBaseVide() throws Exception {
         assertThat(utilisateurRepository.count()).isZero();
 
-        mockMvc.perform(get("/auth/setup-required"))
+        mockMvc.perform(get("/api/auth/setup-required"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.setupRequired").value(true));
     }
@@ -71,7 +71,7 @@ class SetupAdminIT {
                 { "nom": "Premier Admin", "email": "premier-admin@tsena.mg", "motDePasse": "SecretTest123!" }
                 """;
 
-        mockMvc.perform(post("/auth/register")
+        mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payload))
                 .andExpect(status().isOk())
@@ -89,12 +89,12 @@ class SetupAdminIT {
                 { "nom": "Premier Admin", "email": "admin-unique@tsena.mg", "motDePasse": "SecretTest123!" }
                 """;
 
-        mockMvc.perform(post("/auth/register")
+        mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(premierPayload))
                 .andExpect(status().isOk());
 
-        mockMvc.perform(get("/auth/setup-required"))
+        mockMvc.perform(get("/api/auth/setup-required"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.setupRequired").value(false));
 
@@ -102,7 +102,7 @@ class SetupAdminIT {
                 { "nom": "Second Admin", "email": "autre-admin@tsena.mg", "motDePasse": "SecretTest123!" }
                 """;
 
-        mockMvc.perform(post("/auth/register")
+        mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(secondPayload))
                 .andExpect(status().isForbidden())
@@ -118,7 +118,7 @@ class SetupAdminIT {
                 { "nom": "Tentative", "email": "tentative-employe@tsena.mg", "motDePasse": "SecretTest123!", "role": "EMPLOYE" }
                 """;
 
-        String reponse = mockMvc.perform(post("/auth/register")
+        String reponse = mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payloadAvecRoleFournit))
                 .andExpect(status().isOk())

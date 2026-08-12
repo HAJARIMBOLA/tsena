@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.LocalDateTime;
 
 @RestController
-@RequestMapping("/ventes")
+@RequestMapping("/api/ventes")
 public class VenteController {
 
     private final VenteService venteService;
