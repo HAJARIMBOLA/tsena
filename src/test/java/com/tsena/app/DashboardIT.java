@@ -51,7 +51,6 @@ class DashboardIT extends AbstractIntegrationTest {
                 .nom("Riz")
                 .categorie("Cereales")
                 .unite(Unite.SAC)
-                .prixUnitaire(new BigDecimal("1000"))
                 .actif(true)
                 .build());
 
@@ -59,7 +58,6 @@ class DashboardIT extends AbstractIntegrationTest {
                 .nom("Sucre")
                 .categorie("Epicerie")
                 .unite(Unite.KG)
-                .prixUnitaire(new BigDecimal("2000"))
                 .actif(true)
                 .build());
 

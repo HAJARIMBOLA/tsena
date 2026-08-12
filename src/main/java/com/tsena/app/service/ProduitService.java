@@ -24,7 +24,6 @@ public class ProduitService {
                 .nom(dto.getNom())
                 .categorie(dto.getCategorie())
                 .unite(dto.getUnite())
-                .prixUnitaire(dto.getPrixUnitaire())
                 .actif(true)
                 .build();
 
@@ -54,7 +53,6 @@ public class ProduitService {
         Produit produit = getOuLeverException(id);
         produit.setNom(dto.getNom());
         produit.setCategorie(dto.getCategorie());
-        produit.setPrixUnitaire(dto.getPrixUnitaire());
         return toDto(produit);
     }
 
@@ -74,7 +72,6 @@ public class ProduitService {
                 .nom(produit.getNom())
                 .categorie(produit.getCategorie())
                 .unite(produit.getUnite())
-                .prixUnitaire(produit.getPrixUnitaire())
                 .actif(produit.getActif())
                 .build();
     }

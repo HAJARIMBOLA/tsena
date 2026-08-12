@@ -69,7 +69,6 @@ class DashboardDiagIT extends AbstractIntegrationTest {
                 .nom("Produit Dashboard Diag")
                 .categorie("Cereales")
                 .unite(Unite.SAC)
-                .prixUnitaire(new BigDecimal("10000"))
                 .actif(true)
                 .build());
 

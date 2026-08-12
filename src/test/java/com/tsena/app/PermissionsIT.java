@@ -74,7 +74,6 @@ class PermissionsIT extends AbstractIntegrationTest {
                 .nom("Riz")
                 .categorie("Cereales")
                 .unite(Unite.SAC)
-                .prixUnitaire(new BigDecimal("20000"))
                 .actif(true)
                 .build());
 

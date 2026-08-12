@@ -2,11 +2,10 @@ import { useEffect, useState } from 'react'
 import * as produitService from '../../services/produitService'
 import { extraireMessageErreur } from '../../api/apiError'
 import { Alerte, ChargementPage } from '../../components/PageState'
-import { formaterMontant } from '../../utils/format'
 
 const UNITES = ['KG', 'TONNE', 'SAC']
 
-const FORMULAIRE_VIDE = { nom: '', categorie: '', unite: 'KG', prixUnitaire: '' }
+const FORMULAIRE_VIDE = { nom: '', categorie: '', unite: 'KG' }
 
 export default function ProduitsPage() {
   const [produits, setProduits] = useState([])
@@ -40,10 +39,7 @@ export default function ProduitsPage() {
     setErreurCreation(null)
     setCreationEnCours(true)
     try {
-      const produit = await produitService.creer({
-        ...formulaire,
-        prixUnitaire: Number(formulaire.prixUnitaire),
-      })
+      const produit = await produitService.creer(formulaire)
       setProduits((precedent) => [produit, ...precedent])
       setFormulaire(FORMULAIRE_VIDE)
     } catch (err) {
@@ -60,17 +56,13 @@ export default function ProduitsPage() {
       nom: produit.nom,
       categorie: produit.categorie,
       unite: produit.unite,
-      prixUnitaire: produit.prixUnitaire,
     })
   }
 
   async function enregistrerEdition(id) {
     setErreurEdition(null)
     try {
-      const produit = await produitService.modifier(id, {
-        ...formulaireEdition,
-        prixUnitaire: Number(formulaireEdition.prixUnitaire),
-      })
+      const produit = await produitService.modifier(id, formulaireEdition)
       setProduits((precedent) => precedent.map((p) => (p.id === id ? produit : p)))
       setEditionId(null)
     } catch (err) {
@@ -134,18 +126,6 @@ export default function ProduitsPage() {
             ))}
           </select>
         </div>
-        <div>
-          <label className="mb-1 block text-xs font-medium text-slate-500">Prix unitaire</label>
-          <input
-            required
-            type="number"
-            min="0.01"
-            step="0.01"
-            value={formulaire.prixUnitaire}
-            onChange={(e) => setFormulaire((f) => ({ ...f, prixUnitaire: e.target.value }))}
-            className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
-          />
-        </div>
         <button
           type="submit"
           disabled={creationEnCours}
@@ -163,7 +143,6 @@ export default function ProduitsPage() {
               <th className="px-4 py-3">Nom</th>
               <th className="px-4 py-3">Categorie</th>
               <th className="px-4 py-3">Unite</th>
-              <th className="px-4 py-3 text-right">Prix unitaire</th>
               <th className="px-4 py-3">Statut</th>
               <th className="px-4 py-3" />
             </tr>
@@ -187,16 +166,6 @@ export default function ProduitsPage() {
                     />
                   </td>
                   <td className="px-4 py-2 text-slate-400">{produit.unite}</td>
-                  <td className="px-4 py-2">
-                    <input
-                      type="number"
-                      min="0.01"
-                      step="0.01"
-                      value={formulaireEdition.prixUnitaire}
-                      onChange={(e) => setFormulaireEdition((f) => ({ ...f, prixUnitaire: e.target.value }))}
-                      className="w-full rounded-md border border-slate-300 px-2 py-1 text-right text-sm"
-                    />
-                  </td>
                   <td className="px-4 py-2" />
                   <td className="px-4 py-2">
                     <div className="flex justify-end gap-2">
@@ -222,7 +191,6 @@ export default function ProduitsPage() {
                   <td className="px-4 py-3 font-medium text-slate-700">{produit.nom}</td>
                   <td className="px-4 py-3 text-slate-500">{produit.categorie}</td>
                   <td className="px-4 py-3 text-slate-500">{produit.unite}</td>
-                  <td className="px-4 py-3 text-right text-slate-600">{formaterMontant(produit.prixUnitaire)}</td>
                   <td className="px-4 py-3">
                     <span
                       className={`rounded-full px-2 py-0.5 text-xs font-medium ${

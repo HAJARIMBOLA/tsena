@@ -64,7 +64,7 @@ export default function StockPage() {
 
   useEffect(() => {
     setUniteSaisie(produitChoisi?.unite ?? '')
-    setPrixUnitaireAjout(produitChoisi?.prixUnitaire != null ? String(produitChoisi.prixUnitaire) : '')
+    setPrixUnitaireAjout('')
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [produitChoisi?.id])
 

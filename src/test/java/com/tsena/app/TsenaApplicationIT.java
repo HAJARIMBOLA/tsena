@@ -12,8 +12,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import java.math.BigDecimal;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
@@ -44,7 +42,6 @@ class TsenaApplicationIT extends AbstractIntegrationTest {
                 .nom("Riz blanc")
                 .categorie("Cereales")
                 .unite(Unite.SAC)
-                .prixUnitaire(new BigDecimal("25000.00"))
                 .actif(true)
                 .build());
 

@@ -196,7 +196,6 @@ class UtilisateurAdminIT extends AbstractIntegrationTest {
                 .nom("Produit Suppression Test")
                 .categorie("Test")
                 .unite(Unite.SAC)
-                .prixUnitaire(new BigDecimal("1000"))
                 .actif(true)
                 .build());
 

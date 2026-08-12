@@ -67,7 +67,6 @@ class VenteConcurrenceIT extends AbstractIntegrationTest {
                 .nom("Riz")
                 .categorie("Cereales")
                 .unite(Unite.SAC)
-                .prixUnitaire(new BigDecimal("1000"))
                 .actif(true)
                 .build());
 
